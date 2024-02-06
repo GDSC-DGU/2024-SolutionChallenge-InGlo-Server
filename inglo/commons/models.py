@@ -5,4 +5,3 @@ class SDGs(models.Model):
 
 class Country(models.Model):
     name = models.CharField(max_length=100)
-
