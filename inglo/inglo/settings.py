@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'issues',
     'sketches',
     'posts',
-    'commons',
 
     # Django DRF
     'rest_framework',
