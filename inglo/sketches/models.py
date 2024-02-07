@@ -3,6 +3,7 @@ from users.models import User
 
 class Problem(models.Model):
     content = models.TextField()
+    sdgs = models.CharField(max_length=100)
     # SDGs 관계는 core 앱에서 정의
 
 class Sketch(models.Model):

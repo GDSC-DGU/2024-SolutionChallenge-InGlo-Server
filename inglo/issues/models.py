@@ -19,7 +19,7 @@ class IssueList(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     country = models.CharField(max_length=100)
-    sdgs = models.CharField(max_length=100)
+    sdgs = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueComment(models.Model):
