@@ -16,7 +16,10 @@ class IssueList(models.Model):
     issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name='list')
     views = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
+    title = models.CharField(max_length=255)
     description = models.TextField()
+    country = models.CharField(max_length=100)
+    sdgs = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueComment(models.Model):
