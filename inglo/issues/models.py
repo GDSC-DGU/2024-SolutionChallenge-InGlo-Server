@@ -18,8 +18,8 @@ class IssueList(models.Model):
     likes = models.IntegerField(default=0)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    country = models.CharField(max_length=100)
-    sdgs = models.IntegerField()
+    country = models.IntegerField() # 국가 번호로
+    sdgs = models.IntegerField() # SDGs 번호로
     created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueComment(models.Model):

@@ -6,6 +6,7 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     sketch = models.ForeignKey(Sketch, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
+    sdgs = models.IntegerField() # 반정규화. Sdgs 번호
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Feedback(models.Model):
