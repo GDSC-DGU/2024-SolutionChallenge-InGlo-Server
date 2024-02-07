@@ -3,8 +3,7 @@ from users.models import User
 
 class Problem(models.Model):
     content = models.TextField()
-    sdgs = models.CharField(max_length=100)
-    # SDGs 관계는 core 앱에서 정의
+    sdgs = models.IntegerField()
 
 class Sketch(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sketches')
@@ -13,6 +12,8 @@ class Sketch(models.Model):
     content = models.TextField()
     image_url = models.URLField()
     problem = models.ForeignKey(Problem, on_delete=models.SET_NULL, null=True, related_name='sketches')
+    hmw = models.ForeignKey('HMW', on_delete=models.SET_NULL, null=True, related_name='sketches')
+    crazy8stack = models.ForeignKey('Crazy8Stack', on_delete=models.SET_NULL, null=True, related_name='sketches')
     created_at = models.DateTimeField(auto_now_add=True)
 
 class HMW(models.Model):
