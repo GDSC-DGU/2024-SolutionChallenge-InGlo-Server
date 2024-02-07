@@ -7,6 +7,4 @@ urlpatterns = [
     path('issues/', include('issues.urls')),
     path('posts/', include('posts.urls')),
     path('sketches/', include('sketches.urls')),
-    path('commons/', include('commons.urls')),
-
 ]
