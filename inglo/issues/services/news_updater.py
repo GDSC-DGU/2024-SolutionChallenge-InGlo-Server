@@ -1,9 +1,9 @@
 from issues.utils.news_api import fetch_news
 from issues.utils.classifier import classify_news
 
-def update_issues_from_news():
+def update_issues_from_news(keyword, today):
     # news api 호출하여 뉴스데이터 얻어옴
-    news_items = fetch_news()
+    news_items = fetch_news(keyword, today)
     news_properties = [] # 뉴스 api를 사용해서 가져온 뉴스 데이터들 각각을 {link, writer, title, content, created_at, image_url, description, country, sdgs } 형태로 저장할 배열 
 
     # 각 뉴스 아이템을 지정된 속성에 맞게 변환
@@ -20,8 +20,8 @@ def update_issues_from_news():
             "writer": news_item.get('author', ''),
             "title": news_item.get('title', ''),
             "content": news_item.get('content', ''),
-            "created_at": news_item.get('publishedAt', ''),
             "image_url": news_item.get('urlToImage', ''),
+            "created_at": news_item.get('publishedAt', ''),
             "description": news_item.get('description', ''),
             "country": country,
             "sdgs": sdgs,

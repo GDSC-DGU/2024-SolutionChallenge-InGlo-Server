@@ -6,6 +6,8 @@ from rest_framework import generics
 from rest_framework.response import Response
 from .models import Issue, IssueList, IssueComment
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
+from rest_framework import status
+from .services import update_issues_from_news
 
 class RecommendedIssueListView(generics.ListAPIView):
     serializer_class = IssueListSerializer
@@ -47,3 +49,42 @@ class IssueDetailView(generics.RetrieveAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
     lookup_field = 'id'
+
+class IssueUpdateView(generics.APIView):
+    """
+    외부 News API로부터 데이터를 가져와
+    분류모델을 돌려서
+    Issue, IssueImage, IssueList에 저장
+    """
+
+    def post(self, request, *args, **kwargs):
+        news_properties = update_issues_from_news(keyword='SDGs', today=timezone.now())
+
+        for item in news_properties:
+            # Issue 추가
+            issue_serializer = IssueSerializer(data={
+                "link": item['link'],
+                "writer": item['writer'],
+                "title": item['title'],
+                "content": item['content'],
+                "image_url": item['image_url'], 
+                "created_at": item['created_at'],
+            })
+            if issue_serializer.is_valid():
+                issue = issue_serializer.save()
+
+                # IssueList 추가
+                issue_list_serializer = IssueListSerializer(data={
+                    "issue": issue.id,
+                    "views": 0,
+                    "likes": 0,
+                    "title": item['title'],
+                    "description": item['description'],
+                    "country": item['country'],
+                    "sdgs": item['sdgs'],
+                    "created_at": item['created_at'],
+                })
+                if issue_list_serializer.is_valid():
+                    issue_list_serializer.save()
+        
+        return Response({"message": "Issues successfully updated."}, status=status.HTTP_200_OK)
