@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db.models import F, ExpressionWrapper, fields
 from django.db.models.functions import Now
 from datetime import timedelta
-from rest_framework import generics, viewsets
+from rest_framework import generics
 from rest_framework.response import Response
 from .models import Issue, IssueList, IssueComment
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
@@ -42,3 +42,8 @@ class SDGsIssueListView(generics.ListAPIView):
             return IssueList.objects.filter(sdgs=sdgs_number).order_by('-created_at')[:10]
         except (ValueError, TypeError):
             return IssueList.objects.none()  # 유효하지 않은 경우, 빈 쿼리셋 반환
+
+class IssueDetailView(generics.RetrieveAPIView):
+    queryset = Issue.objects.all()
+    serializer_class = IssueSerializer
+    lookup_field = 'id'
