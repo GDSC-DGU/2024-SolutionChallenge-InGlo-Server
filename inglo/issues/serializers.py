@@ -7,6 +7,8 @@ class IssueSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class IssueImageSerializer(serializers.ModelSerializer):
+    issue = serializers.PrimaryKeyRelatedField(read_only=True)
+    
     class Meta:
         model = IssueImage
         fields = '__all__'
@@ -17,7 +19,8 @@ class IssueListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class IssueCommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()  # 사용자 이름 표시
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = IssueComment
         fields = '__all__'
