@@ -6,11 +6,8 @@ class Issue(models.Model):
     writer = models.CharField(max_length=100)
     title = models.CharField(max_length=255)
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class IssueImage(models.Model):
-    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='images')
     image_url = models.URLField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueList(models.Model):
     issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name='list')

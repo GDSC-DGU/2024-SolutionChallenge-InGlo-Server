@@ -1,16 +1,9 @@
 from rest_framework import serializers
-from .models import Issue, IssueImage, IssueList, IssueComment
+from .models import Issue, IssueList, IssueComment
 
 class IssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Issue
-        fields = '__all__'
-
-class IssueImageSerializer(serializers.ModelSerializer):
-    issue = serializers.PrimaryKeyRelatedField(read_only=True)
-    
-    class Meta:
-        model = IssueImage
         fields = '__all__'
 
 class IssueListSerializer(serializers.ModelSerializer):
