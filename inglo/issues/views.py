@@ -22,3 +22,23 @@ class RecommendedIssueListView(generics.ListAPIView):
             ranking=ExpressionWrapper(F('likes')*10 + F('views'), output_field=fields.IntegerField())
         ).filter(created_at__gte=recent_time_limit).order_by('-ranking')[:3]
         return queryset
+
+class SDGsIssueListView(generics.ListAPIView):
+    serializer_class = IssueListSerializer
+
+    def get_queryset(self):
+        """
+        클라이언트로부터 받은 SDGs 헤더 값을 기반으로
+        해당 SDGs 카테고리와 관련된 최신 10개의 이슈를 반환.
+        """
+        sdgs_number = self.request.headers.get('SDGs')
+        
+        # SDGs 헤더 값 유효성 검사. 비어있거나, 1~17 사이의 정수가 아니면 빈 쿼리셋 반환
+        if sdgs_number is None or not sdgs_number.isdigit() or not 1 <= int(sdgs_number) <= 17:
+            return IssueList.objects.none()
+        
+        try:
+            sdgs_number = int(sdgs_number)
+            return IssueList.objects.filter(sdgs=sdgs_number).order_by('-created_at')[:10]
+        except (ValueError, TypeError):
+            return IssueList.objects.none()  # 유효하지 않은 경우, 빈 쿼리셋 반환
