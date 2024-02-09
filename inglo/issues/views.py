@@ -6,8 +6,9 @@ from rest_framework import generics, viewsets, status
 from rest_framework.response import Response
 from .models import Issue, IssueList, IssueComment
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
-from .services import update_issues_from_news
-from .permissions import IsOwnerOrReadOnly, IsAuthenticated
+from .services.news_updater import update_issues_from_news
+from .permissions import IsOwnerOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 class RecommendedIssueListView(generics.ListAPIView):
     serializer_class = IssueListSerializer
@@ -89,17 +90,40 @@ class IssueUpdateView(generics.APIView):
         
         return Response({"message": "Issues successfully updated."}, status=status.HTTP_200_OK)
     
-class IssueCommentViewSet(viewsets):
-    queryset = IssueComment.objects.all()
-    serializer_class = IssueCommentSerializer
+class IssueCommentCreate(generics.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, issue_id):
+        data = request.data
+        data['issue'] = issue_id
+        data['user'] = request.user.id
+        serializer = IssueCommentSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class IssueCommentDetail(generics.APIView):
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
-    def perform_create(self, serializer):
-        # 댓글 생성 시, 댓글의 'user' 필드를 현재 요청을 보낸 사용자로 설정
-        serializer.save(user=self.request.user)
+    def get_object(self, pk):
+        try:
+            return IssueComment.objects.get(pk=pk)
+        except IssueComment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-    def perform_update(self, serializer):
-        super().perform_update(serializer)
+    def patch(self, request, issue_id, pk):
+        comment = self.get_object(pk)
+        serializer = IssueCommentSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def perform_destroy(self, instance):
-        instance.delete()
+    def delete(self, request, issue_id, pk):
+        comment = self.get_object(pk)
+        if comment.user != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
