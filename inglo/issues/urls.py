@@ -1,8 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RecommendedIssueListView, SDGsIssueListView, IssueDetailView, IssueUpdateView
+from .views import RecommendedIssueListView, SDGsIssueListView, IssueDetailView, IssueUpdateView, IssueCommentViewSet
 
 router = DefaultRouter()
+router.register(r'api/v1/issues/comments', IssueCommentViewSet)
 
 urlpatterns = [
     path('api/v1/', include([
