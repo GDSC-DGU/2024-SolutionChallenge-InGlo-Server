@@ -2,12 +2,12 @@ from django.utils import timezone
 from django.db.models import F, ExpressionWrapper, fields
 from django.db.models.functions import Now
 from datetime import timedelta
-from rest_framework import generics
+from rest_framework import generics, viewsets, status
 from rest_framework.response import Response
 from .models import Issue, IssueList, IssueComment
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
-from rest_framework import status
 from .services import update_issues_from_news
+from .permissions import IsOwnerOrReadOnly, IsAuthenticated
 
 class RecommendedIssueListView(generics.ListAPIView):
     serializer_class = IssueListSerializer
@@ -88,3 +88,18 @@ class IssueUpdateView(generics.APIView):
                     issue_list_serializer.save()
         
         return Response({"message": "Issues successfully updated."}, status=status.HTTP_200_OK)
+    
+class IssueCommentViewSet(viewsets):
+    queryset = IssueComment.objects.all()
+    serializer_class = IssueCommentSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def perform_create(self, serializer):
+        # 댓글 생성 시, 댓글의 'user' 필드를 현재 요청을 보낸 사용자로 설정
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        instance.delete()
