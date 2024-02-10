@@ -26,3 +26,4 @@ class Crazy8Stack(models.Model):
 class Crazy8Content(models.Model):
     crazy8stack = models.ForeignKey(Crazy8Stack, on_delete=models.CASCADE, related_name='contents')
     content = models.TextField()
+    vote_count = models.IntegerField(default=0)
