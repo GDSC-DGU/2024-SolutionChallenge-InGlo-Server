@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Timezone
+USE_TZ = True
+TIME_ZONE = 'Asia/Seoul'
 
 # Application definition
 
