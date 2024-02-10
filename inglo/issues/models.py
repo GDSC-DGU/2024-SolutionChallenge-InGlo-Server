@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import User
+from django.conf import settings
 
 class Issue(models.Model):
     link = models.URLField()
@@ -20,13 +20,13 @@ class IssueList(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueComment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
     parent_comment = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
 
 class IssueLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='likes')
     created_at = models.DateTimeField(auto_now_add=True)
