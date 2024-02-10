@@ -18,7 +18,7 @@ class IssueService:
             if not country.isdigit() or not sdgs.isdigit() or not 1 <= int(country) <= 10 or not 1 <= int(sdgs) <= 17:
                 continue
             
-            Issue.objects.create(
+            new_issue = Issue.objects.create(
                 link=item.get('url', ''),
                 writer=item.get('author', ''),
                 title=item.get('title', ''),
@@ -27,7 +27,7 @@ class IssueService:
                 created_at=item.get('publishedAt', '')
             )
             IssueList.objects.create(
-                issue=Issue.objects.latest('id'),
+                issue=new_issue,
                 views=0,
                 likes=0,
                 title=item.get('title', ''),
@@ -36,7 +36,7 @@ class IssueService:
                 sdgs=sdgs,
                 created_at=item.get('publishedAt', '')
             )
-    
+
     @staticmethod
     @transaction.atomic
     def get_issue_with_increased_view(issue_id):
@@ -47,7 +47,6 @@ class IssueService:
             return None
         
     @staticmethod
-    @transaction.atomic
     def get_recommended_issues():
         recent_time_limit = timezone.now() - timedelta(hours=72)
         return IssueList.objects.annotate(
@@ -55,7 +54,6 @@ class IssueService:
         ).filter(created_at__gte=recent_time_limit).order_by('-ranking')[:3]
 
     @staticmethod
-    @transaction.atomic
     def get_issues_by_sdgs(sdgs_number):
         if not sdgs_number.isdigit() or not 1 <= int(sdgs_number) <= 17:
             return IssueList.objects.none()
