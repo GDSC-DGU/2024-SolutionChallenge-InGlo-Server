@@ -9,6 +9,11 @@ class Post(models.Model):
     sdgs = models.IntegerField() # 반정규화. Sdgs 번호
     created_at = models.DateTimeField(auto_now_add=True)
 
+class PostLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class Feedback(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='feedbacks')
