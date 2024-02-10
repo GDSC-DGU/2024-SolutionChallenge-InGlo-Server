@@ -1,8 +1,6 @@
-# news api 호출, news들이 담긴 딕셔너리 배열 리턴
-from django.utils import timezone
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 from dotenv import load_dotenv
 
 def fetch_news(keyword, today):
