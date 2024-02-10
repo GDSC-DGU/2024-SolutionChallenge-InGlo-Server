@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.db.models import F, ExpressionWrapper, fields
 from django.db.models.functions import Now
 from datetime import timedelta
-from rest_framework import generics, viewsets, status
+from rest_framework import generics, viewsets, status, views
 from rest_framework.response import Response
 from .models import Issue, IssueList, IssueComment
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
@@ -50,8 +50,9 @@ class IssueDetailView(generics.RetrieveAPIView):
     queryset = Issue.objects.all()
     serializer_class = IssueSerializer
     lookup_field = 'id'
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 조회수 증가 로직 추가 필요 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-class IssueUpdateView(generics.APIView):
+class IssueUpdateView(views.APIView):
     """
     외부 News API로부터 데이터를 가져와
     분류모델을 돌려서
@@ -90,7 +91,7 @@ class IssueUpdateView(generics.APIView):
         
         return Response({"message": "Issues successfully updated."}, status=status.HTTP_200_OK)
     
-class IssueCommentCreate(generics.APIView):
+class IssueCommentCreate(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, issue_id):
@@ -104,7 +105,7 @@ class IssueCommentCreate(generics.APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class IssueCommentDetail(generics.APIView):
+class IssueCommentDetail(views.APIView):
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_object(self, pk):
@@ -127,3 +128,25 @@ class IssueCommentDetail(generics.APIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+# 이슈 페이지에 들어갔을 때, 내가 좋아요를 누른 상태인지 확인할 수 있어야함.
+class IssueLikeViewSet(viewsets.ModelViewSet):
+    queryset = IssueList.objects.all()
+    serializer_class = IssueListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        issue_list = IssueList.objects.get(pk=kwargs['pk'])
+        issue_list.likes += 1
+        issue_list.save()
+        serializer = self.get_serializer(issue_list)
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        issue_list = IssueList.objects.get(pk=kwargs['pk'])
+        issue_list.likes -= 1
+        issue_list.save()
+        serializer = self.get_serializer(issue_list)
+        return Response(serializer.data)
