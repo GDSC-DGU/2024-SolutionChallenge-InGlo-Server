@@ -1,6 +1,5 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import RecommendedIssueListView, SDGsIssueListView, IssueDetailView, IssueUpdateView, IssueCommentCreate, IssueCommentDetail
+from .views import RecommendedIssueListView, SDGsIssueListView, IssueDetailView, IssueUpdateView, IssueCommentCreate, IssueCommentDetail, IssueLikeView
 
 
 urlpatterns = [
@@ -11,5 +10,6 @@ urlpatterns = [
         path('issues/', IssueUpdateView.as_view(), name='issue-create'),
         path('issues/<int:issue_id>/comments/', IssueCommentCreate.as_view(), name='comment-create'),
         path('issues/<int:issue_id>/comments/<int:pk>/', IssueCommentDetail.as_view(), name='comment-detail'),
+        path('issues/<int:issue_id>/like/', IssueLikeView.as_view(), name='issue-like'),
     ])),
 ]
