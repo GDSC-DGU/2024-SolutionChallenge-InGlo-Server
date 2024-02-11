@@ -9,7 +9,7 @@ from rest_framework import generics, views
 
 class ProblemListView(generics.ListAPIView):
 
-    serializer_class = ProblemSerializer
+    serializer_class = ProblemSerializer(many=True, read_only=True)
 
     def get_queryset(self):
         """
@@ -55,7 +55,7 @@ class ProblemChooseView(views.APIView):
 
 class HMWListView(generics.ListAPIView):
 
-    serializer_class = HMWSerializer
+    serializer_class = HMWSerializer(many=True, read_only=True)
 
     def get_queryset(self):
         """
@@ -73,6 +73,7 @@ class HMWCreateView(views.APIView):
         def post(self, request, *args, **kwargs):
             """
             클라이언트로부터 받은 problem_id, content를 바탕으로 HMW 생성
+            생성한 HMW를 사용자가 최근에 만든 빈 스케치에 연결
             """
     
             problem_id = self.kwargs.get('problem_id')
@@ -84,7 +85,7 @@ class HMWCreateView(views.APIView):
         
 class Crazy8ListView(generics.ListAPIView):
     
-    serializer_class = Crazy8StackSerializer
+    serializer_class = Crazy8StackSerializer(many=True, read_only=True)
     
     def get_queryset(self):
         """
@@ -101,12 +102,13 @@ class Crazy8CreateView(views.APIView):
         
         def post(self, request, *args, **kwargs):
             """
-            클라이언트로부터 받은 problem_id, content를 바탕으로 Crazy8 생성
+            클라이언트로부터 받은 problem_id, content를 바탕으로 Crazy8Content를 생성
+            이때 Crazy8Stack이 없으면(첫 Crazy8Content 생성시) Crazy8Stack을 생성하고 빈 스케치에 연결
             """
             
             problem_id = self.kwargs.get('problem_id')
             content = request.data.get('content')
-            crazy8 = Crazy8Service.create_crazy8(problem_id,content)
+            crazy8 = Crazy8Service.create_crazy8(problem_id,content,request.user)
             if crazy8:
                 return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
             return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)
