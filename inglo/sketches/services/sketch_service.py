@@ -12,3 +12,8 @@ class SketchService:
         sketch.content = content
         sketch.save()
         return sketch
+    
+    def delete_sketch(sketch_id):
+        sketch = Sketch.objects.get(id=sketch_id)
+        sketch.delete()
+        return sketch
