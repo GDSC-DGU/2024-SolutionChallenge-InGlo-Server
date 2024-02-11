@@ -159,3 +159,18 @@ class SketchUpdateView(views.APIView):
         if sketch:
             return Response({"message": "Sketch update successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Sketch update failed"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class SketchDeleteView(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        """
+        유저가 작성한 솔루션 스케치 삭제
+        """
+
+        sketch_id = self.kwargs.get('sketch_id')
+        sketch = SketchService.delete_sketch(sketch_id)
+        if sketch:
+            return Response({"message": "Sketch delete successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Sketch delete failed"}, status=status.HTTP_400_BAD_REQUEST)
