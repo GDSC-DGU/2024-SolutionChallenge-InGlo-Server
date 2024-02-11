@@ -55,10 +55,9 @@ class IssueService:
 
     @staticmethod
     def get_issues_by_sdgs(sdgs_number):
-        if not sdgs_number.isdigit() or not 1 <= int(sdgs_number) <= 17:
+        if not 1 <= int(sdgs_number) <= 17:
             return IssueList.objects.none()
         try:
-            sdgs_number = int(sdgs_number)
             return IssueList.objects.filter(sdgs=sdgs_number).order_by('-created_at')[:10]
         except (ValueError, TypeError):
             return IssueList.objects.none()
@@ -66,9 +65,13 @@ class IssueService:
     @staticmethod
     @transaction.atomic
     def toggle_like(user, issue_id):
+        issue = Issue.objects.get(id=issue_id)
+        issue_list = IssueList.objects.filter(issue=issue)
         issue_like, created = IssueLike.objects.get_or_create(user=user, issue_id=issue_id)
         if not created:
             issue_like.delete()
+            issue_list.update(likes=F('likes') - 1)
             return False  # 좋아요 취소
         else:
+            issue_list.update(likes=F('likes') + 1)
             return True  # 좋아요 추가
