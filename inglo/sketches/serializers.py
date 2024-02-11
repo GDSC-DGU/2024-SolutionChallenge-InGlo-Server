@@ -32,9 +32,14 @@ class ProblemNestedSerializer(serializers.ModelSerializer):
         model = Problem
         fields = '__all__'
 
-class SketchSerializer(serializers.ModelSerializer):
+class SketchNestedSerializer(serializers.ModelSerializer):
     associated_problem = ProblemNestedSerializer(read_only=True)
 
     class Meta:
         model = Sketch
         fields = ['id', 'user', 'created_at']
+        
+class SketchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sketch
+        fields = '__all__'

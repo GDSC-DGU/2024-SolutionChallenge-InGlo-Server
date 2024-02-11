@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer
+from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer, SketchNestedSerializer
 from .services.problem_service import ProblemService
 from .services.hmw_service import HMWService
 from .services.crazy8_service import Crazy8Service
@@ -139,6 +139,23 @@ class SketchListView(generics.ListAPIView):
         """
         
         return SketchService.get_sketches_by_user(self.request.user) 
+    
+class SketchDetailView(views.APIView):
+
+    serializer_class = SketchNestedSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 sketch_id를 가진 스케치 반환
+        """
+
+        sketch_id = self.kwargs.get('sketch_id')
+        sketch = SketchService.get_sketch_by_id(sketch_id)
+        if sketch:
+            serializer = SketchNestedSerializer(sketch)
+            return Response(serializer.data)
+        else:
+            return Response({"error": "Sketch not found"}, status=404)
     
 class SketchUpdateView(views.APIView):
     
