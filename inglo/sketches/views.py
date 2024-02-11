@@ -1,9 +1,10 @@
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, Crazy8ContentSerializer
+from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer
 from .services.problem_service import ProblemService
 from .services.hmw_service import HMWService
 from .services.crazy8_service import Crazy8Service
+from .services.sketch_service import SketchService
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, views
 
@@ -127,3 +128,34 @@ class Crazy8VoteView(views.APIView):
         if voted:
             return Response({"message": "Vote added successfully."}, status=201)
         return Response({"error": "Vote failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+class SketchListView(generics.ListAPIView):
+    
+    serializer_class = SketchSerializer(many=True, read_only=True)
+    
+    def get_queryset(self):
+        """
+        유저가 작성한 솔루션 스케치 리스트 반환
+        """
+        
+        return SketchService.get_sketches_by_user(self.request.user) 
+    
+class SketchUpdateView(views.APIView):
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        지금까지 작성된 문제정의, HMW, Crazy8을 바탕으로, 
+        이미 생성되어있던 빈 스케치에 내용들을 추가
+        """
+        
+        problem_id = self.kwargs.get('problem_id')
+        title = request.data.get('title')
+        description = request.data.get('description')
+        image_url = request.data.get('image_url')
+        content = request.data.get('content')
+        sketch = SketchService.update_sketch(request.user,problem_id,title,description,image_url,content)
+        if sketch:
+            return Response({"message": "Sketch update successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Sketch update failed"}, status=status.HTTP_400_BAD_REQUEST)
