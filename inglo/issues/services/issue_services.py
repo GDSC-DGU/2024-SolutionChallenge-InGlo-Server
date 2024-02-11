@@ -55,10 +55,9 @@ class IssueService:
 
     @staticmethod
     def get_issues_by_sdgs(sdgs_number):
-        if not sdgs_number.isdigit() or not 1 <= int(sdgs_number) <= 17:
+        if not 1 <= int(sdgs_number) <= 17:
             return IssueList.objects.none()
         try:
-            sdgs_number = int(sdgs_number)
             return IssueList.objects.filter(sdgs=sdgs_number).order_by('-created_at')[:10]
         except (ValueError, TypeError):
             return IssueList.objects.none()
