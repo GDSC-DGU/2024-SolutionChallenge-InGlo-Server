@@ -30,7 +30,7 @@ class Crazy8Service:
     @transaction.atomic
     def toggle_vote(user, crazy8content_id):
         new_crazy8content = Crazy8Content.objects.get(id=crazy8content_id)
-        voted_crazy8 = Crazy8Vote.objects.filter(user=user)
+        voted_crazy8 = Crazy8Vote.objects.filter(user=user).first()
         if voted_crazy8: # 이미 투표한 것이 있다면, 해당 투표를 취소하고 새로운 투표를 추가
             old_crazy8content = voted_crazy8.crazy8content
             old_crazy8content.vote_count -= 1
