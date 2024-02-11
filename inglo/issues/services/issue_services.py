@@ -65,9 +65,13 @@ class IssueService:
     @staticmethod
     @transaction.atomic
     def toggle_like(user, issue_id):
+        issue = Issue.objects.get(id=issue_id)
+        issue_list = IssueList.objects.filter(issue=issue)
         issue_like, created = IssueLike.objects.get_or_create(user=user, issue_id=issue_id)
         if not created:
             issue_like.delete()
+            issue_list.update(likes=F('likes') - 1)
             return False  # 좋아요 취소
         else:
+            issue_list.update(likes=F('likes') + 1)
             return True  # 좋아요 추가
