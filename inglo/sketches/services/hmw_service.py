@@ -1,5 +1,7 @@
 from ..models import HMW
 from ..models import Problem
+from ..models import Sketch
+from django.db import transaction
 
 class HMWService:
 
@@ -13,10 +15,15 @@ class HMWService:
             return HMW.objects.none()
     
     @staticmethod
-    def create_hmw(problem_id, content):
+    @transaction.atomic
+    def create_hmw(problem_id, content, user):
         try:
             problem = Problem.objects.get(id = problem_id)
             hmw = HMW.objects.create(problem = problem, content = content)
+            sketch = Sketch.objects.filter(user=user, problem=problem).order_by('-created_at').first() # 가장 최근에 추가된 해당 문제와 관련되어 사용자가 만든 스케치를 가져옴
+            if sketch:
+                sketch.hmw = hmw
+                sketch.save()
             return hmw
         except (Problem.DoesNotExist, ValueError, TypeError):
             return None
