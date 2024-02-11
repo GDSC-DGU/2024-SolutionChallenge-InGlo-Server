@@ -37,11 +37,12 @@ class IssueDetailView(views.APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, issue_id):
+    def get(self, request, *args, **kwargs):
         """
         조회수를 1 증가시킨 후 해당 이슈 반환
         """
 
+        issue_id = self.kwargs.get('issue_id')
         issue = IssueService.get_issue_with_increased_view(issue_id)
         if issue:
             serializer = IssueSerializer(issue)
@@ -66,11 +67,12 @@ class IssueLikeView(views.APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, issue_id):
+    def post(self, request, *args, **kwargs):
         """
         좋아요 추가 또는 삭제
         """
 
+        issue_id = self.kwargs.get('issue_id')
         liked = IssueService.toggle_like(request.user, issue_id)
         if liked:
             return Response({"message": "Like added successfully."}, status=201)
@@ -81,11 +83,12 @@ class IssueCommentCreate(views.APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, issue_id):
+    def post(self, request, *args, **kwargs):
         """
         댓글 생성
         """
 
+        issue_id = self.kwargs.get('issue_id')
         comment = CommentService.create_comment(user=request.user, issue_id=issue_id, data=request.data)
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data, status=201)
@@ -94,10 +97,12 @@ class IssueCommentUpdate(views.APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def patch(self, request, comment_id):
+    def patch(self, request, *args, **kwargs):
         """
         댓글 수정
         """
+
+        comment_id = self.kwargs.get('comment_id')
         comment = CommentService.update_comment(user=request.user, comment_id=comment_id, data=request.data)
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data)
@@ -106,9 +111,11 @@ class IssueCommentDelete(views.APIView):
 
     permission_classes = [IsAuthenticated]
     
-    def delete(self, request, comment_id):
+    def delete(self, request, *args, **kwargs):
         """
         댓글 삭제
         """
+        
+        comment_id = self.kwargs.get('comment_id')
         CommentService.delete_comment(user=request.user, comment_id=comment_id)
         return Response(status=204)
