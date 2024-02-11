@@ -112,3 +112,18 @@ class Crazy8CreateView(views.APIView):
             if crazy8:
                 return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
             return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class Crazy8VoteView(views.APIView):
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 crazy8content_id를 가진 Crazy8Content에 투표
+        """
+        
+        crazy8content_id = self.kwargs.get('crazy8content_id')
+        voted = Crazy8Service.toggle_vote(request.user, crazy8content_id)
+        if voted:
+            return Response({"message": "Vote added successfully."}, status=201)
+        return Response({"error": "Vote failed"}, status=status.HTTP_400_BAD_REQUEST)

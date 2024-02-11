@@ -27,3 +27,8 @@ class Crazy8Content(models.Model):
     crazy8stack = models.ForeignKey(Crazy8Stack, on_delete=models.CASCADE, related_name='contents')
     content = models.TextField()
     vote_count = models.IntegerField(default=0)
+
+class Crazy8Vote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    crazy8content = models.ForeignKey(Crazy8Content, on_delete=models.CASCADE, related_name='votes')
+    created_at = models.DateTimeField(auto_now_add=True)
