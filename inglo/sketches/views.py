@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, Crazy8ContentSerializer
 from .services.problem_service import ProblemService
 from .services.hmw_service import HMWService
+from .services.crazy8_service import Crazy8Service
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, views
 
@@ -35,6 +36,22 @@ class ProblemCreateView(views.APIView):
         if problem:
             return Response({"message": "Problem insert successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Problem creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class ProblemChooseView(views.APIView):
+     
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 problem_id를 가진 빈 스케치를 생성
+        이후에 선택되는 hmw, crazy8들은 이 스케치에 연결됨
+        """ 
+        problem_id = self.kwargs.get('problem_id')
+        sketch = ProblemService.create_sketch(problem_id, request.user)
+        if sketch:
+            return Response({"message": "Problem chosen successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Sketch chosen failed"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class HMWListView(generics.ListAPIView):
 
@@ -60,7 +77,36 @@ class HMWCreateView(views.APIView):
     
             problem_id = self.kwargs.get('problem_id')
             content = request.data.get('content')
-            hmw = HMWService.create_hmw(problem_id,content)
+            hmw = HMWService.create_hmw(problem_id,content, request.user)
             if hmw:
                 return Response({"message": "HMW insert successfully."}, status=status.HTTP_201_CREATED)
             return Response({"error": "HMW creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class Crazy8ListView(generics.ListAPIView):
+    
+    serializer_class = Crazy8StackSerializer
+    
+    def get_queryset(self):
+        """
+        클라이언트로부터 받은 problem_id 값과 관련된 Crazy8 리스트 반환
+        """
+        
+        problem_id = self.kwargs.get('problem_id')
+        crazy8 = Crazy8Service.get_crazy8s_by_problem(problem_id)
+        return crazy8
+    
+class Crazy8CreateView(views.APIView):
+        
+        permission_classes = [IsAuthenticated]
+        
+        def post(self, request, *args, **kwargs):
+            """
+            클라이언트로부터 받은 problem_id, content를 바탕으로 Crazy8 생성
+            """
+            
+            problem_id = self.kwargs.get('problem_id')
+            content = request.data.get('content')
+            crazy8 = Crazy8Service.create_crazy8(problem_id,content)
+            if crazy8:
+                return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
+            return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)

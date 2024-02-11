@@ -1,4 +1,5 @@
-from ..models import Problem
+from ..models import Problem, Sketch
+from datetime import datetime
 
 class ProblemService:
     @staticmethod
@@ -16,4 +17,13 @@ class ProblemService:
             problem = Problem.objects.create(sdgs=sdgs, content=content)
             return problem
         except (ValueError, TypeError):
+            return None
+        
+    @staticmethod
+    def create_sketch(problem_id, user):
+        try:
+            problem = Problem.objects.get(id = problem_id)
+            sketch = Sketch.objects.create(user = user, problem = problem)
+            return sketch
+        except (Problem.DoesNotExist, ValueError, TypeError):
             return None
