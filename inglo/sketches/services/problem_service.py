@@ -8,7 +8,7 @@ class ProblemService:
         try:
             sdgs = int(sdgs)
             return Problem.objects.filter(sdgs=sdgs).order_by('-created_at')[:10]
-        except (ValueError, TypeError):
+        except Problem.DoesNotExist:
             return Problem.objects.none()
 
     @staticmethod
