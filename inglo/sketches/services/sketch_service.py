@@ -17,3 +17,6 @@ class SketchService:
         sketch = Sketch.objects.get(id=sketch_id)
         sketch.delete()
         return sketch
+
+    def get_sketch_by_id(sketch_id):
+        return Sketch.objects.get(id=sketch_id)

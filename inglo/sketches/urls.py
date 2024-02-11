@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import ProblemListView, ProblemCreateView, ProblemChooseView, HMWListView, HMWCreateView, Crazy8ListView, Crazy8CreateView, Crazy8VoteView, SketchListView, SketchUpdateView
+from .views import ProblemListView, ProblemCreateView, ProblemChooseView, HMWListView, HMWCreateView, Crazy8ListView, Crazy8CreateView, Crazy8VoteView, SketchListView, SketchUpdateView, SketchDetailView, SketchDeleteView
 
 
 urlpatterns = [
@@ -13,4 +13,6 @@ urlpatterns = [
     path('<int:problem_id>/crazy8/vote/', Crazy8VoteView.as_view(), name='crazy8-vote'),
     path('', SketchListView.as_view(), name='sketch-list'),
     path('<int:problem_id>/update/', SketchUpdateView.as_view(), name='sketch-update'),
+    path('<int:sketch_id>', SketchDetailView.as_view(), name='sketch-detail'),
+    path('<int:sketch_id>/delete/', SketchDeleteView.as_view(), name='sketch-delete'),
 ]
