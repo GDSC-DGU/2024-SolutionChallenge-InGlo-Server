@@ -40,7 +40,7 @@ class IssueService:
     @staticmethod
     @transaction.atomic
     def get_issue_with_increased_view(issue_id):
-        IssueList.objects.filter(issue__id=issue_id).update(views=F('views') + 1)
+        IssueList.objects.filter(issue_id=issue_id).update(views=F('views') + 1)
         try:
             return Issue.objects.get(id=issue_id)
         except Issue.DoesNotExist:
