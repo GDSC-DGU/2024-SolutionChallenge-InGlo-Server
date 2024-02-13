@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, views , status
 from .services.post_service import PostService
-from .serializers import PostSerializer, PostDetailSerializer
+from .services.feedback_service import FeedbackService
+from .serializers import PostSerializer, PostDetailSerializer, FeedbackSerializer
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
@@ -103,3 +104,53 @@ class PostLikeView(views.APIView):
             return Response({"message": "Like added successfully."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"message": "Like removed successfully."}, status=status.HTTP_204_NO_CONTENT)
+        
+class FeedbackCreateView(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        content를 받아 Feedback을 생성
+        """
+        post_id = self.kwargs.get('post_id')
+        content = request.data.get('content')
+        parent_id = request.data.get('parent_id')
+        feedback = FeedbackService.create_feedback(request.user, post_id, content, parent_id)
+        if feedback:
+            serializer = FeedbackSerializer(feedback)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error": "Feedback create failed"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class FeedbackUpdateView(views.APIView):
+    
+    permission_classes = [IsAuthenticated]
+        
+    def post(self, request, *args, **kwargs):
+        """
+        content를 받아 Feedback을 업데이트
+        """
+        feedback_id = self.kwargs.get('feedback_id')
+        content = request.data.get('content')
+        feedback = FeedbackService.update_feedback(request.user, feedback_id, content)
+        if feedback:
+            serializer = FeedbackSerializer(feedback)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Feedback update failed"}, status=status.HTTP_400_BAD_REQUEST)
+            
+class FeedbackDeleteView(views.APIView):
+        
+    permission_classes = [IsAuthenticated]
+            
+    def delete(self, request, *args, **kwargs):
+        """
+        Feedback 삭제
+        """
+        feedback_id = self.kwargs.get('feedback_id')
+        feedback = FeedbackService.delete_feedback(request.user, feedback_id)
+        if feedback:
+            return Response({"message": "Feedback delete successfully."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Feedback delete failed"}, status=status.HTTP_400_BAD_REQUEST)
