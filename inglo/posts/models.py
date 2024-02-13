@@ -7,6 +7,7 @@ class Post(models.Model):
     sketch = models.ForeignKey(Sketch, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField()
     sdgs = models.IntegerField() # 반정규화. Sdgs 번호
+    likes = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
 class PostLike(models.Model):
