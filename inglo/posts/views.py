@@ -89,17 +89,17 @@ class PostDeleteView(views.APIView):
             else:
                 return Response({"error": "You do not have permission to delete this post."}, status=status.HTTP_403_FORBIDDEN)
         
-# class PostLikeView(views.APIView):
+class PostLikeView(views.APIView):
 
-#     permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
-#     def post(self, request, *args, **kwargs):
-#         """
-#         좋아요 추가 또는 삭제
-#         """
-#         post_id = self.kwargs.get('post_id')
-#         liked = PostService.toggle_like(request.user, post_id)
-#         if liked:
-#             return Response({"message": "Like added successfully."}, status=status.HTTP_201_CREATED)
-#         else:
-#             return Response({"message": "Like removed successfully."}, status=status.HTTP_204_NO_CONTENT)
+    def post(self, request, *args, **kwargs):
+        """
+        좋아요 추가 또는 삭제
+        """
+        post_id = self.kwargs.get('post_id')
+        liked = PostService.toggle_like(request.user, post_id)
+        if liked:
+            return Response({"message": "Like added successfully."}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"message": "Like removed successfully."}, status=status.HTTP_204_NO_CONTENT)

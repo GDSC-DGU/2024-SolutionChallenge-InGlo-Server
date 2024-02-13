@@ -46,15 +46,15 @@ class PostService:
         post.delete()
         return post
     
-    # @staticmethod
-    # @transaction.atomic
-    # def toggle_like(user, post_id):
-    #     post = Post.objects.get(id=post_id)
-    #     post_like, created = PostLike.objects.get_or_create(user=user, post_id=post_id)
-    #     if not created:
-    #         post_like.delete()
-    #         post_like.update(like_count=F('like_count') - 1)
-    #         return False
-    #     else:
-    #         post_like.update(like_count=F('like_count') + 1)
-    #         return True
+    @staticmethod
+    @transaction.atomic
+    def toggle_like(user, post_id):
+        post = Post.objects.get(id=post_id)
+        post_like, created = PostLike.objects.get_or_create(user=user, post_id=post_id)
+        if not created:
+            post_like.delete()
+            post_like.update(like_count=F('like_count') - 1)
+            return False
+        else:
+            post_like.update(like_count=F('like_count') + 1)
+            return True
