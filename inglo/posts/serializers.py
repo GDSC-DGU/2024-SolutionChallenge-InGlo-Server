@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Post, Feedback, PostLike
-from ..sketches.serializers import SketchNestedSerializer
+from sketches.serializers import SketchNestedSerializer
 
 class PostSerializer(serializers.ModelSerializer):
     class Meta:

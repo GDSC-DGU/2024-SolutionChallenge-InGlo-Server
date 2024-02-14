@@ -12,7 +12,7 @@ class Post(models.Model):
 
 class PostLike(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_likes')
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Feedback(models.Model):
