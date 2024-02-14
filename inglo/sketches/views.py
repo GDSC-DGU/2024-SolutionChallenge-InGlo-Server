@@ -90,7 +90,7 @@ class Crazy8ListView(generics.ListAPIView):
     
     def get_queryset(self):
         """
-        클라이언트로부터 받은 problem_id 값과 관련된 Crazy8 리스트 반환
+        클라이언트로부터 받은 problem id 값과 관련된 "Crazy8 스택"의 리스트 반환
         """
         
         problem_id = self.kwargs.get('problem_id')
@@ -123,7 +123,7 @@ class Crazy8VoteView(views.APIView):
         클라이언트로부터 받은 crazy8content_id를 가진 Crazy8Content에 투표
         """
         
-        crazy8content_id = self.kwargs.get('crazy8content_id')
+        crazy8content_id = request.data.get('crazy8content_id')
         voted = Crazy8Service.toggle_vote(request.user, crazy8content_id)
         if voted:
             return Response({"message": "Vote added successfully."}, status=201)
