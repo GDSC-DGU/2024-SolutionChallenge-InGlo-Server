@@ -63,10 +63,11 @@ class PostUpdateView(views.APIView):
         content를 받아 Post를 업데이트
         """
         post_id = self.kwargs.get('post_id')
+        title = request.data.get('title')
         content = request.data.get('content')
 
         if content:
-            post = PostService.update_post(request.user, post_id, content)
+            post = PostService.update_post(request.user, post_id, title, content)
             if post:
                 serializer = PostSerializer(post)
                 return Response(serializer.data, status=status.HTTP_200_OK)
