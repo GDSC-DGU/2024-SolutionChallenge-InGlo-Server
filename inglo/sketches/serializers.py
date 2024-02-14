@@ -18,7 +18,7 @@ class Crazy8ContentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class Crazy8StackSerializer(serializers.ModelSerializer):
-    contents = Crazy8ContentSerializer(many=True, read_only=True, source='contents')
+    contents = Crazy8ContentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Crazy8Stack
