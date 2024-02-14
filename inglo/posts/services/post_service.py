@@ -1,6 +1,7 @@
 from django.db.models import Q
 from ..models import Post, Sketch, Feedback, PostLike
 from django.db import transaction
+from django.db.models import F
 
 class PostService:
 
@@ -29,11 +30,12 @@ class PostService:
         
     @staticmethod
     @transaction.atomic
-    def update_post(user, post_id, content):
+    def update_post(user, post_id, title, content):
         post = Post.objects.get(id=post_id)
         if post.user != user:
             return None
         post.content = content
+        post.title = title
         post.save()
         return post
     
@@ -53,8 +55,10 @@ class PostService:
         post_like, created = PostLike.objects.get_or_create(user=user, post_id=post_id)
         if not created:
             post_like.delete()
-            post_like.update(like_count=F('like_count') - 1)
+            post.likes = F('likes') - 1 
+            post.save()
             return False
         else:
-            post_like.update(like_count=F('like_count') + 1)
+            post.likes = F('likes') + 1
+            post.save()
             return True
