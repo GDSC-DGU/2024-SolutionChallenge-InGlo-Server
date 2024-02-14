@@ -12,7 +12,7 @@ class CommentService:
             user=user,
             issue=issue,
             content=data['content'],
-            parent_comment_id=data.get('parent_comment_id')
+            parent_comment_id=int(data['parent_comment']) if 'parent_comment' in data else None
         )
         return comment
 

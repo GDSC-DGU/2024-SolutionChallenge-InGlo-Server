@@ -26,11 +26,11 @@ class SDGsIssueListView(generics.ListAPIView):
 
     def get_queryset(self):
         """
-        클라이언트로부터 받은 SDGs 헤더 값을 기반으로
+        클라이언트로부터 받은 SDGs 값을 기반으로
         해당 SDGs 카테고리와 관련된 최신 10개의 이슈를 반환.
         """
 
-        sdgs_number = self.request.headers.get('SDGs')
+        sdgs_number = self.kwargs.get('sdgs')
         return IssueService.get_issues_by_sdgs(sdgs_number)
 
 class IssueDetailView(views.APIView):
@@ -45,7 +45,7 @@ class IssueDetailView(views.APIView):
         issue_id = self.kwargs.get('issue_id')
         issue = IssueService.get_issue_with_increased_view(issue_id)
         if issue:
-            serializer = IssueSerializer(issue)
+            serializer = IssueSerializer(issue,context={'request': request})
             return Response(serializer.data)
         else:
             return Response({"error": "Issue not found"}, status=404)
@@ -118,4 +118,4 @@ class IssueCommentDelete(views.APIView):
         
         comment_id = self.kwargs.get('comment_id')
         CommentService.delete_comment(user=request.user, comment_id=comment_id)
-        return Response(status=204)
+        return Response({"message": "Comment deleted successfully."}, status=204)
