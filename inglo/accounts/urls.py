@@ -1,5 +1,6 @@
 from django.urls import path
 from django.conf.urls import include
+from .views import login_success
 from accounts.views import (
     GoogleLoginView,
     # KakaoLoginView,
@@ -13,4 +14,6 @@ urlpatterns = [
     # path('kakao/login/', KakaoLoginView.as_view(), name='api_accounts_kakao_oauth'),
     path('google/login/', GoogleLoginView.as_view(), name='api_accounts_google_oauth'),
     # path('naver/login/', NaverLoginView.as_view(), name='api_accounts_naver_oauth'),
+    path('login-success/', login_success, name='login-success'),
 ]
+
