@@ -118,4 +118,4 @@ class IssueCommentDelete(views.APIView):
         
         comment_id = self.kwargs.get('comment_id')
         CommentService.delete_comment(user=request.user, comment_id=comment_id)
-        return Response(status=204)
+        return Response({"message": "Comment deleted successfully."}, status=204)
