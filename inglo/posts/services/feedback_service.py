@@ -12,7 +12,10 @@ class FeedbackService:
         user, post_id, content를 받아 Feedback을 생성
         """
         post = Post.objects.get(id=post_id)
-        parent_feedback = Feedback.objects.filter(id=parent_id).first()
+        if parent_id:
+            parent_feedback = Feedback.objects.filter(id=parent_id).first()
+        else:
+            parent_feedback = None
         return Feedback.objects.create(user=user, post=post, content=content, parent_feedback=parent_feedback)
     
     @staticmethod
