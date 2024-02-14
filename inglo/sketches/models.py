@@ -7,7 +7,8 @@ class Problem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.content
+        return f"{self.id} - {self.content}"
+
 
 class Sketch(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sketches')
@@ -21,7 +22,8 @@ class Sketch(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.id} - {self.title}"
+
 
 class HMW(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name='hmws')
@@ -36,7 +38,7 @@ class Crazy8Stack(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Crazy8Stack for {self.problem}'
+        return f'{self.id} - Crazy8Stack for {self.problem}'
 
 class Crazy8Content(models.Model):
     crazy8stack = models.ForeignKey(Crazy8Stack, on_delete=models.CASCADE, related_name='contents')
@@ -45,7 +47,8 @@ class Crazy8Content(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.content
+        return f"{self.id} - {self.content}"
+
 
 class Crazy8Vote(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
