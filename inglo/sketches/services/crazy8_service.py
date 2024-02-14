@@ -2,6 +2,7 @@ from ..models import Crazy8Stack, Crazy8Content, Crazy8Vote
 from ..models import Problem
 from ..models import Sketch
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 class Crazy8Service:
     def get_crazy8s_by_problem(problem_id):
@@ -22,7 +23,7 @@ class Crazy8Service:
             sketch.crazy8stack = crazy8stack
             sketch.save()
         if Crazy8Content.objects.filter(crazy8stack=sketch.crazy8stack).count() >= 8:
-            return None #일단 8개 초과하여 crazy8content를 생성할 수 없도록 함
+            raise ValidationError("Maximum number of Crazy8Contents reached. No more can be created.")
         crazy8content = Crazy8Content.objects.create(crazy8stack=sketch.crazy8stack, content=content)
         return crazy8content
     

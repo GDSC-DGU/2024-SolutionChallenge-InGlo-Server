@@ -10,7 +10,7 @@ from rest_framework import generics, views
 
 class ProblemListView(generics.ListAPIView):
 
-    serializer_class = ProblemSerializer(many=True, read_only=True)
+    serializer_class = ProblemSerializer
 
     def get_queryset(self):
         """
@@ -47,7 +47,7 @@ class ProblemChooseView(views.APIView):
         클라이언트로부터 받은 problem_id를 가진 빈 스케치를 생성
         이후에 선택되는 hmw, crazy8들은 이 스케치에 연결됨
         """ 
-        problem_id = self.kwargs.get('problem_id')
+        problem_id = request.data.get('problem_id')
         sketch = ProblemService.create_sketch(problem_id, request.user)
         if sketch:
             return Response({"message": "Problem chosen successfully."}, status=status.HTTP_201_CREATED)
@@ -56,7 +56,7 @@ class ProblemChooseView(views.APIView):
 
 class HMWListView(generics.ListAPIView):
 
-    serializer_class = HMWSerializer(many=True, read_only=True)
+    serializer_class = HMWSerializer
 
     def get_queryset(self):
         """
@@ -86,11 +86,11 @@ class HMWCreateView(views.APIView):
         
 class Crazy8ListView(generics.ListAPIView):
     
-    serializer_class = Crazy8StackSerializer(many=True, read_only=True)
+    serializer_class = Crazy8StackSerializer
     
     def get_queryset(self):
         """
-        클라이언트로부터 받은 problem_id 값과 관련된 Crazy8 리스트 반환
+        클라이언트로부터 받은 problem id 값과 관련된 "Crazy8 스택"의 리스트 반환
         """
         
         problem_id = self.kwargs.get('problem_id')
@@ -123,7 +123,7 @@ class Crazy8VoteView(views.APIView):
         클라이언트로부터 받은 crazy8content_id를 가진 Crazy8Content에 투표
         """
         
-        crazy8content_id = self.kwargs.get('crazy8content_id')
+        crazy8content_id = request.data.get('crazy8content_id')
         voted = Crazy8Service.toggle_vote(request.user, crazy8content_id)
         if voted:
             return Response({"message": "Vote added successfully."}, status=201)
@@ -131,7 +131,7 @@ class Crazy8VoteView(views.APIView):
 
 class SketchListView(generics.ListAPIView):
     
-    serializer_class = SketchSerializer(many=True, read_only=True)
+    serializer_class = SketchSerializer
     
     def get_queryset(self):
         """

@@ -23,7 +23,7 @@ class ProblemService:
     def create_sketch(problem_id, user):
         try:
             problem = Problem.objects.get(id = problem_id)
-            sketch = Sketch.objects.create(user = user, problem = problem)
+            sketch = Sketch.objects.create(user = user, problem = problem, title = "Untitled", description = "No description", image_url = "", content = "", created_at = datetime.now())
             return sketch
         except (Problem.DoesNotExist, ValueError, TypeError):
             return None
