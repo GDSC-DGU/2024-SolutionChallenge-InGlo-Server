@@ -19,10 +19,10 @@ class PostService:
 
     @staticmethod
     @transaction.atomic
-    def create_post(user, sketch_id, content, sdgs):
+    def create_post(user, sketch_id, title, content, sdgs):
         try:
             sketch = Sketch.objects.get(id=sketch_id)
-            post = Post.objects.create(user=user, sketch=sketch, content=content, sdgs=sdgs)
+            post = Post.objects.create(user=user, sketch=sketch,title=title, content=content, sdgs=sdgs)
             return post
         except (ValueError, TypeError):
             return None

@@ -5,10 +5,14 @@ from sketches.models import Sketch
 class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
     sketch = models.ForeignKey(Sketch, on_delete=models.CASCADE, related_name='posts')
+    title = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField()
     sdgs = models.IntegerField() # 반정규화. Sdgs 번호
-    likes = models.IntegerField()
+    likes = models.IntegerField(default=0, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.id} - {self.title}"
 
 class PostLike(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -21,3 +25,6 @@ class Feedback(models.Model):
     content = models.TextField()
     parent_feedback = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.id} - {self.post_id}에 대한 피드백: {self.content}"
