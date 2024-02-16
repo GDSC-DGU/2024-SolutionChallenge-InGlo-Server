@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Issue, IssueList, IssueComment, IssueLike
-from accounts.models import User
 
 class IssueListSerializer(serializers.ModelSerializer):
     class Meta:

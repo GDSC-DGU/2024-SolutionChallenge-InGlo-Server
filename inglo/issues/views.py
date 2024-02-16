@@ -50,7 +50,7 @@ class IssueDetailView(views.APIView):
         else:
             return Response({"error": "Issue not found"}, status=404)
 
-class IssueUpdateView(views.APIView):
+class IssueCreateView(views.APIView):
         
     def post(self, request, *args, **kwargs):
         """
