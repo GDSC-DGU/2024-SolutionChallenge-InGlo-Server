@@ -7,6 +7,9 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .serializers import UserSerializer
 
 
 class GoogleLoginView(SocialLoginView):
@@ -30,6 +33,22 @@ def login_success(request):
 
     # JSON 응답 반환
     return JsonResponse(response_data)
+
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    """
+    유저 정보 조회 및 수정
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def get_queryset(self):
+        return self.request.user
+
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 
 # class KakaoLoginView(SocialLoginView):

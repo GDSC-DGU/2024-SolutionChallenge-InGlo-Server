@@ -6,6 +6,7 @@ from accounts.views import (
     # KakaoLoginView,
     # NaverLoginView,
 )
+from accounts.views import UserDetailView
 
 urlpatterns = [
     path('', include('dj_rest_auth.urls')),
@@ -15,5 +16,6 @@ urlpatterns = [
     path('google/login/', GoogleLoginView.as_view(), name='api_accounts_google_oauth'),
     # path('naver/login/', NaverLoginView.as_view(), name='api_accounts_naver_oauth'),
     path('login-success/', login_success, name='login-success'),
+    path('info/', UserDetailView.as_view(), name='user-info'),
 ]
 

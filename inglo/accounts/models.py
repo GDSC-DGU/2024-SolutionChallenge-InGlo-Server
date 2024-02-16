@@ -5,7 +5,6 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 
-
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -24,6 +23,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email       = models.EmailField(max_length=255, unique=True)
+    profile_img = models.URLField(blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active   = models.BooleanField(default=True)
     is_staff    = models.BooleanField(default=False)
