@@ -58,7 +58,7 @@ class PostUpdateView(views.APIView):
 
     permission_classes = [IsAuthenticated]
     
-    def post(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
         content를 받아 Post를 업데이트
         """
@@ -128,7 +128,7 @@ class FeedbackUpdateView(views.APIView):
     
     permission_classes = [IsAuthenticated]
         
-    def post(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
         content를 받아 Feedback을 업데이트
         """

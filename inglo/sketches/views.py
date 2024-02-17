@@ -161,7 +161,7 @@ class SketchUpdateView(views.APIView):
     
     permission_classes = [IsAuthenticated]
     
-    def post(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
         지금까지 작성된 문제정의, HMW, Crazy8을 바탕으로, 
         이미 생성되어있던 빈 스케치에 내용들을 추가
