@@ -85,6 +85,29 @@ class AdditionalUserInfoView(views.APIView):
         user.additional_info_provided = True
         user.save()
         return JsonResponse({"message": "Additional user information updated successfully"}, status=200)
+    
+class ProfileImageUploadView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        image = request.FILES.get('profile_img')  # 'profile_img'는 form-data에서 파일 필드의 이름
+        if not image:
+            return JsonResponse({"error": "No image provided"}, status=400)
+
+        s3_resource = boto3.resource('s3',
+                                     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                                     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                                     region_name=os.getenv('AWS_REGION_NAME'))
+        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+        file_path = f'user_{user.id}/{image.name}'  # S3 내에서 파일을 저장할 경로
+        s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ACL='public-read')
+
+        image_url = f'https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}'
+        user.profile_img = image_url
+        user.save()
+
+        return JsonResponse({"message": "Profile image uploaded successfully", "image_url": image_url})
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     """
