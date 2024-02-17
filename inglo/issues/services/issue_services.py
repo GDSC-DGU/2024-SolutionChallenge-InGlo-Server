@@ -6,6 +6,15 @@ from ..models import Issue, IssueList, IssueLike
 from datetime import timedelta
 from ..utils.classifier import classify_news
 from ..utils.news_api import fetch_news
+from dotenv import load_dotenv
+import requests
+from io import BytesIO
+import os
+import boto3
+import magic
+from urllib.parse import urlparse
+
+load_dotenv()
 
 class IssueService:
     @staticmethod
@@ -17,16 +26,15 @@ class IssueService:
             country, sdgs = classify_news(item.get('title', ''), item.get('content', ''))
             if not country.isdigit() or not sdgs.isdigit() or not 1 <= int(country) <= 10 or not 1 <= int(sdgs) <= 17:
                 continue
-            
+                
             new_issue = Issue.objects.create(
                 link=item.get('url', ''),
                 writer=item.get('author', ''),
                 title=item.get('title', ''),
                 content=item.get('content', ''),
-                image_url=item.get('urlToImage', ''),
                 created_at=item.get('publishedAt', '')
             )
-            IssueList.objects.create(
+            issue_list = IssueList.objects.create(
                 issue=new_issue,
                 views=0,
                 likes=0,
@@ -34,9 +42,49 @@ class IssueService:
                 description=item.get('description', ''),
                 country=country,
                 sdgs=sdgs,
-                image_url=item.get('urlToImage', ''),
                 created_at=item.get('publishedAt', '')
             )
+
+            image_url = item.get('urlToImage', '')
+
+            s3_resource = boto3.resource('s3',
+                                     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                                     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                                     region_name=os.getenv('AWS_REGION_NAME'))
+            bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+        
+            file_path = f'news_images/{new_issue}'  # S3 내에서 파일을 저장할 경로
+            
+            # URL이 유효한지 확인하는 함수 추가
+            def is_valid_url(url):
+                try:
+                    result = urlparse(url)
+                    return all([result.scheme, result.netloc])
+                except Exception:
+                    return False
+
+            # URL 유효성 검사 후 처리
+            if image_url and is_valid_url(image_url):
+                try:
+                    response = requests.get(image_url)
+                    response.raise_for_status()  # 요청 실패 시 예외 발생
+
+                    image = BytesIO(response.content)
+                    mime_type = magic.from_buffer(image.read(2048), mime=True)
+                    image.seek(0)  
+
+                    s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ContentType=mime_type)
+
+                    image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
+                    new_issue.image_url = image_url
+                    new_issue.save()
+                    issue_list.image_url = image_url
+                    issue_list.save()
+
+                except Exception as e:
+                    print(f"Error downloading or uploading image: {e}")
+            else:
+                print("Invalid or missing image URL.")
 
     @staticmethod
     @transaction.atomic
