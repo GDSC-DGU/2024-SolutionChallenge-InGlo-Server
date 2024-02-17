@@ -1,4 +1,4 @@
-from rest_framework import generics, status, views
+from rest_framework import generics, status, views, viewsets, mixins
 from rest_framework.response import Response
 from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSerializer
 from .services.issue_services import IssueService
@@ -93,7 +93,7 @@ class IssueCommentCreate(views.APIView):
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data, status=201)
 
-class IssueCommentUpdate(views.APIView):
+class IssueCommentUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
 
     permission_classes = [IsAuthenticated]
 
@@ -106,12 +106,8 @@ class IssueCommentUpdate(views.APIView):
         comment = CommentService.update_comment(user=request.user, comment_id=comment_id, data=request.data)
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data)
-
-class IssueCommentDelete(views.APIView):
-
-    permission_classes = [IsAuthenticated]
     
-    def delete(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         """
         댓글 삭제
         """
