@@ -1,18 +1,16 @@
 from django.urls import path, include
-from .views import ProblemListView, ProblemCreateView, ProblemChooseView, HMWListView, HMWCreateView, Crazy8ListView, Crazy8CreateView, Crazy8VoteView, SketchListView, SketchUpdateView, SketchDetailView, SketchDeleteView
+from .views import Crazy8VoteView, SketchUpdateView
+from rest_framework.routers import SimpleRouter
+from .views import ProblemViewSet, HMWViewSet, Crazy8ViewSet, SketchViewSet, SketchDetailViewSet
 
+router = SimpleRouter()
 
 urlpatterns = [
-    path('<int:sdgs>/problem/', ProblemListView.as_view(), name='problem-list'),
-    path('<int:sdgs>/problem/', ProblemCreateView.as_view(), name='problem-create'),
-    path('<int:problem_id>/hmw/', HMWListView.as_view(), name='hmw-list'),
-    path('<int:problem_id>/hmw/', HMWCreateView.as_view(), name='hmw-create'),
-    path('<int:problem_id>/crazy8/', Crazy8ListView.as_view(), name='crazy8-list'),
-    path('<int:problem_id>/crazy8/', Crazy8CreateView.as_view(), name='crazy8-create'),
-    path('<int:problem_id>/crazy8/vote/', Crazy8VoteView.as_view(), name='crazy8-vote'),
-    path('', ProblemChooseView.as_view(), name='problem-choose'),
-    path('', SketchListView.as_view(), name='sketch-list'),
+    path('<int:sdgs>/problem/', ProblemViewSet.as_view({'get': 'list', 'post': 'create'}), name='problem-list-create'),
+    path('<int:problem_id>/hmw/', HMWViewSet.as_view({'get': 'list', 'post': 'create'}), name='hmw-list-create'),
+    path('<int:problem_id>/crazy8/', Crazy8ViewSet.as_view({'get': 'list', 'post': 'create'}), name='crazy8-list'),
+    path('', SketchViewSet.as_view({'get': 'list', 'post': 'create'}), name='sketch-list-create'),
+    path('<int:sketch_id>', SketchDetailViewSet.as_view({'get':'retrieve', 'delete':'destroy'}), name='sketch-detail-delete'),
     path('<int:problem_id>', SketchUpdateView.as_view(), name='sketch-update'),
-    path('<int:sketch_id>', SketchDetailView.as_view(), name='sketch-detail'),
-    path('<int:sketch_id>', SketchDeleteView.as_view(), name='sketch-delete'),
+    path('<int:problem_id>/crazy8/vote/', Crazy8VoteView.as_view(), name='crazy8-vote'),
 ]
