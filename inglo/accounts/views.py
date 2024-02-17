@@ -58,7 +58,6 @@ class CustomGoogleLoginView(views.APIView):
         if "error" in user_info:
             return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
 
-        # 사용자 정보를 바탕으로 사용자 모델 조회 또는 생성
         user, created = User.objects.get_or_create(email=user_info['email'])
 
         # 새로운 사용자의 경우 임의의 비밀번호 설정
@@ -67,7 +66,6 @@ class CustomGoogleLoginView(views.APIView):
             user.set_password(random_password)
             user.save()
 
-        # 사용자에 대한 JWT 토큰 발급
         refresh = RefreshToken.for_user(user)
         response_data = {
             'refresh': str(refresh),
@@ -75,6 +73,18 @@ class CustomGoogleLoginView(views.APIView):
         }
 
         return JsonResponse(response_data)
+    
+class AdditionalUserInfoView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        user.name = request.data.get('name')
+        user.country = request.data.get('country')
+        user.language = request.data.get('language')
+        user.additional_info_provided = True
+        user.save()
+        return JsonResponse({"message": "Additional user information updated successfully"}, status=200)
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
     """
