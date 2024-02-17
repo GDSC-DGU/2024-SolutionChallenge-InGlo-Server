@@ -5,8 +5,6 @@ from accounts.views import (
     CustomGoogleLoginView,
     AdditionalUserInfoView,
     ProfileImageUploadView,
-    # KakaoLoginView,
-    # NaverLoginView,
 )
 from accounts.views import UserDetailView
 
@@ -20,6 +18,4 @@ urlpatterns = [
     path('additional_info/', AdditionalUserInfoView.as_view(), name='additional_info'),
     path('profile-image-upload/', ProfileImageUploadView.as_view(), name='profile_image_upload'),
     path('info/', UserDetailView.as_view(), name='user-info'),
-    # path('kakao/login/', KakaoLoginView.as_view(), name='api_accounts_kakao_oauth'),
-    # path('naver/login/', NaverLoginView.as_view(), name='api_accounts_naver_oauth')
 ]
