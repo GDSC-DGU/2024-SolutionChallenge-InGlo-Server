@@ -24,6 +24,8 @@ class PostService:
         try:
             sketch = Sketch.objects.get(id=sketch_id)
             post = Post.objects.create(user=user, sketch=sketch,title=title, content=content, sdgs=sdgs)
+            user.post_total += 1
+            user.save()
             return post
         except (ValueError, TypeError):
             return None
