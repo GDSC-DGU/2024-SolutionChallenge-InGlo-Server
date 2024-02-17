@@ -23,15 +23,17 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email       = models.EmailField(max_length=255, unique=True)
+    name        = models.CharField(max_length=255, blank=True, null=True)
     profile_img = models.URLField(blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active   = models.BooleanField(default=True)
     is_staff    = models.BooleanField(default=False)
-    country     = models.IntegerField(default=0)
+    country     = models.IntegerField(blank=True, null=True)
     language    = models.CharField(max_length=10, default="en")
     liked_total  = models.IntegerField(default=0)
     sketch_num   = models.IntegerField(default=0)
     feedback_total = models.IntegerField(default=0)
+    additional_info_provided = models.BooleanField(default=False)
     created_at  = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
