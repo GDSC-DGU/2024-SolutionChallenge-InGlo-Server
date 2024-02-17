@@ -34,6 +34,7 @@ class IssueService:
                 description=item.get('description', ''),
                 country=country,
                 sdgs=sdgs,
+                image_url=item.get('urlToImage', ''),
                 created_at=item.get('publishedAt', '')
             )
 

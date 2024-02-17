@@ -20,6 +20,7 @@ class IssueList(models.Model):
     description = models.TextField(null=True, blank=True)
     country = models.IntegerField() # 국가 번호로
     sdgs = models.IntegerField() # SDGs 번호로
+    image_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
