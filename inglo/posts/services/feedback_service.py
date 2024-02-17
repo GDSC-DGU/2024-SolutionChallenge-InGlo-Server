@@ -16,6 +16,8 @@ class FeedbackService:
             parent_feedback = Feedback.objects.filter(id=parent_id).first()
         else:
             parent_feedback = None
+        user.feedback_total += 1
+        user.save()
         return Feedback.objects.create(user=user, post=post, content=content, parent_feedback=parent_feedback)
     
     @staticmethod

@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import status, viewsets, mixins
 from rest_framework.response import Response
 from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer, SketchNestedSerializer
 from .services.problem_service import ProblemService
@@ -6,43 +6,39 @@ from .services.hmw_service import HMWService
 from .services.crazy8_service import Crazy8Service
 from .services.sketch_service import SketchService
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics, views
+from rest_framework import views
 
-class ProblemListView(generics.ListAPIView):
-
+class ProblemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
+    """
+    문제정의에 대한 List와 Create API를 하나의 ViewSet에서 처리
+    """
     serializer_class = ProblemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
         클라이언트로부터 받은 SDGs 값과 관련된 문제정의 리스트 반환
         """
-
         sdgs = self.kwargs.get('sdgs')
-        problem = ProblemService.get_problems_by_sdgs(sdgs)
-        return problem
+        return ProblemService.get_problems_by_sdgs(sdgs)
 
-class ProblemCreateView(views.APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-
+    def create(self, request, *args, **kwargs):
         """
         클라이언트로부터 받은 SDGs, content를 바탕으로 문제 생성
         """
-
         sdgs = self.kwargs.get('sdgs')
         content = request.data.get('content')
-        problem = ProblemService.create_problem(sdgs,content)
+        problem = ProblemService.create_problem(sdgs, content)
         if problem:
             return Response({"message": "Problem insert successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Problem creation failed"}, status=status.HTTP_400_BAD_REQUEST)
     
-class ProblemChooseView(views.APIView):
+class SketchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
      
     permission_classes = [IsAuthenticated]
+    serializer_class = SketchSerializer
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         """
         클라이언트로부터 받은 problem_id를 가진 빈 스케치를 생성
         이후에 선택되는 hmw, crazy8들은 이 스케치에 연결됨
@@ -52,11 +48,18 @@ class ProblemChooseView(views.APIView):
         if sketch:
             return Response({"message": "Problem chosen successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Sketch chosen failed"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get_queryset(self):
+        """
+        유저가 작성한 솔루션 스케치 리스트 반환
+        """
+        
+        return SketchService.get_sketches_by_user(self.request.user) 
 
-
-class HMWListView(generics.ListAPIView):
+class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
 
     serializer_class = HMWSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -67,26 +70,23 @@ class HMWListView(generics.ListAPIView):
         hmw = HMWService.get_hmws_by_problem(problem_id)
         return hmw
     
-class HMWCreateView(views.APIView):
+    def create(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 problem_id, content를 바탕으로 HMW 생성
+        생성한 HMW를 사용자가 최근에 만든 빈 스케치에 연결
+        """
     
-        permission_classes = [IsAuthenticated]
-    
-        def post(self, request, *args, **kwargs):
-            """
-            클라이언트로부터 받은 problem_id, content를 바탕으로 HMW 생성
-            생성한 HMW를 사용자가 최근에 만든 빈 스케치에 연결
-            """
-    
-            problem_id = self.kwargs.get('problem_id')
-            content = request.data.get('content')
-            hmw = HMWService.create_hmw(problem_id,content, request.user)
-            if hmw:
-                return Response({"message": "HMW insert successfully."}, status=status.HTTP_201_CREATED)
-            return Response({"error": "HMW creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+        problem_id = self.kwargs.get('problem_id')
+        content = request.data.get('content')
+        hmw = HMWService.create_hmw(problem_id,content, request.user)
+        if hmw:
+            return Response({"message": "HMW insert successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "HMW creation failed"}, status=status.HTTP_400_BAD_REQUEST)
         
-class Crazy8ListView(generics.ListAPIView):
+class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     
     serializer_class = Crazy8StackSerializer
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         """
@@ -96,23 +96,20 @@ class Crazy8ListView(generics.ListAPIView):
         problem_id = self.kwargs.get('problem_id')
         crazy8 = Crazy8Service.get_crazy8s_by_problem(problem_id)
         return crazy8
-    
-class Crazy8CreateView(views.APIView):
         
-        permission_classes = [IsAuthenticated]
         
-        def post(self, request, *args, **kwargs):
-            """
-            클라이언트로부터 받은 problem_id, content를 바탕으로 Crazy8Content를 생성
-            이때 Crazy8Stack이 없으면(첫 Crazy8Content 생성시) Crazy8Stack을 생성하고 빈 스케치에 연결
-            """
+    def create(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 problem_id, content를 바탕으로 Crazy8Content를 생성
+        이때 Crazy8Stack이 없으면(첫 Crazy8Content 생성시) Crazy8Stack을 생성하고 빈 스케치에 연결
+        """
             
-            problem_id = self.kwargs.get('problem_id')
-            content = request.data.get('content')
-            crazy8 = Crazy8Service.create_crazy8(problem_id,content,request.user)
-            if crazy8:
-                return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
-            return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+        problem_id = self.kwargs.get('problem_id')
+        content = request.data.get('content')
+        crazy8 = Crazy8Service.create_crazy8(problem_id,content,request.user)
+        if crazy8:
+            return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)
         
 class Crazy8VoteView(views.APIView):
     
@@ -128,23 +125,13 @@ class Crazy8VoteView(views.APIView):
         if voted:
             return Response({"message": "Vote added successfully."}, status=201)
         return Response({"error": "Vote failed"}, status=status.HTTP_400_BAD_REQUEST)
-
-class SketchListView(generics.ListAPIView):
     
-    serializer_class = SketchSerializer
-    
-    def get_queryset(self):
-        """
-        유저가 작성한 솔루션 스케치 리스트 반환
-        """
-        
-        return SketchService.get_sketches_by_user(self.request.user) 
-    
-class SketchDetailView(views.APIView):
+class SketchDetailViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
 
     serializer_class = SketchNestedSerializer
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         """
         클라이언트로부터 받은 sketch_id를 가진 스케치 반환
         """
@@ -156,6 +143,17 @@ class SketchDetailView(views.APIView):
             return Response(serializer.data)
         else:
             return Response({"error": "Sketch not found"}, status=404)
+        
+    def destroy(self, request, *args, **kwargs):
+        """
+        유저가 작성한 솔루션 스케치 삭제
+        """
+
+        sketch_id = self.kwargs.get('sketch_id')
+        sketch = SketchService.delete_sketch(sketch_id)
+        if sketch:
+            return Response({"message": "Sketch delete successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Sketch delete failed"}, status=status.HTTP_400_BAD_REQUEST)
     
 class SketchUpdateView(views.APIView):
     
@@ -170,24 +168,10 @@ class SketchUpdateView(views.APIView):
         problem_id = self.kwargs.get('problem_id')
         title = request.data.get('title')
         description = request.data.get('description')
-        image_url = request.data.get('image_url')
+        image = request.FILES.get('image')
         content = request.data.get('content')
-        sketch = SketchService.update_sketch(request.user,problem_id,title,description,image_url,content)
+        sketch = SketchService.update_sketch(request.user,problem_id,title,description,image,content)
         if sketch:
             return Response({"message": "Sketch update successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Sketch update failed"}, status=status.HTTP_400_BAD_REQUEST)
     
-class SketchDeleteView(views.APIView):
-
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request, *args, **kwargs):
-        """
-        유저가 작성한 솔루션 스케치 삭제
-        """
-
-        sketch_id = self.kwargs.get('sketch_id')
-        sketch = SketchService.delete_sketch(sketch_id)
-        if sketch:
-            return Response({"message": "Sketch delete successfully."}, status=status.HTTP_201_CREATED)
-        return Response({"error": "Sketch delete failed"}, status=status.HTTP_400_BAD_REQUEST)
