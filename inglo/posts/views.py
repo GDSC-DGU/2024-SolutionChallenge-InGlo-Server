@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import generics, views , status
+from rest_framework import views , status , viewsets , mixins
 from .services.post_service import PostService
 from .services.feedback_service import FeedbackService
 from .serializers import PostSerializer, PostDetailSerializer, FeedbackSerializer
@@ -7,9 +7,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 
-class PostListView(generics.ListAPIView):
+class PostViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
 
     serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
@@ -20,9 +21,26 @@ class PostListView(generics.ListAPIView):
         username = self.request.query_params.get('username', '')
         return PostService.get_post_list(content=content, username=username)
     
-class PostDetailView(views.APIView):
+    def create(self, request, *args, **kwargs):
+        """
+        content를 받아 Post를 생성
+        """
+        title = request.data.get('title')
+        content = request.data.get('content')
+        sketch_id = request.data.get('sketch_id')
+        sdgs = request.data.get('sdgs')
+        image = request.data.get('image')
 
-    def get(self, request, *args, **kwargs):
+        if content:
+            post = PostService.create_post(request.user, sketch_id, title, image, content, sdgs)
+            serializer = PostSerializer(post)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error": "Content not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class PostDetailViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+
+    def retrieve(self, request, *args, **kwargs):
         """
         post_id를 받아 Post를 반환
         """
@@ -33,30 +51,7 @@ class PostDetailView(views.APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-
-class PostCreateView(views.APIView):
-
-    permission_classes = [IsAuthenticated]
     
-    def post(self, request, *args, **kwargs):
-        """
-        content를 받아 Post를 생성
-        """
-        title = request.data.get('title')
-        content = request.data.get('content')
-        sketch_id = request.data.get('sketch_id')
-        sdgs = request.data.get('sdgs')
-
-        if content:
-            post = PostService.create_post(request.user, sketch_id, title, content, sdgs)
-            serializer = PostSerializer(post)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error": "Content not found"}, status=status.HTTP_400_BAD_REQUEST)
-
-class PostUpdateView(views.APIView):
-
-    permission_classes = [IsAuthenticated]
     
     def patch(self, request, *args, **kwargs):
         """
@@ -76,20 +71,16 @@ class PostUpdateView(views.APIView):
         else:
             return Response({"error": "Content not found"}, status=status.HTTP_400_BAD_REQUEST)
         
-class PostDeleteView(views.APIView):
-    
-        permission_classes = [IsAuthenticated]
-        
-        def delete(self, request, *args, **kwargs):
-            """
-            Post 삭제
-            """
-            post_id = self.kwargs.get('post_id')
-            post = PostService.delete_post(request.user, post_id)
-            if post:
-                return Response({"message": "Post delete successfully."}, status=status.HTTP_200_OK)
-            else:
-                return Response({"error": "You do not have permission to delete this post."}, status=status.HTTP_403_FORBIDDEN)
+    def destroy(self, request, *args, **kwargs):
+        """
+        Post 삭제
+        """
+        post_id = self.kwargs.get('post_id')
+        post = PostService.delete_post(request.user, post_id)
+        if post:
+            return Response({"message": "Post delete successfully."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "You do not have permission to delete this post."}, status=status.HTTP_403_FORBIDDEN)
         
 class PostLikeView(views.APIView):
 
@@ -124,8 +115,9 @@ class FeedbackCreateView(views.APIView):
         else:
             return Response({"error": "Feedback create failed"}, status=status.HTTP_400_BAD_REQUEST)
         
-class FeedbackUpdateView(views.APIView):
+class FeedbackUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
     
+    serializer_class = FeedbackSerializer
     permission_classes = [IsAuthenticated]
         
     def patch(self, request, *args, **kwargs):
@@ -141,11 +133,7 @@ class FeedbackUpdateView(views.APIView):
         else:
             return Response({"error": "Feedback update failed"}, status=status.HTTP_400_BAD_REQUEST)
             
-class FeedbackDeleteView(views.APIView):
-        
-    permission_classes = [IsAuthenticated]
-            
-    def delete(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         """
         Feedback 삭제
         """
