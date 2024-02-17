@@ -1,6 +1,7 @@
 import logging
 import boto3
 import os
+import magic
 from dotenv import load_dotenv
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.kakao.views import KakaoOAuth2Adapter
@@ -47,6 +48,7 @@ User = get_user_model()
 class CustomGoogleLoginView(views.APIView):
     def post(self, request, *args, **kwargs):
         access_token = request.data.get('access_token')
+        logger.info(f"CustomGoogleLoginView.post() called with access_token: {access_token}")
         if not access_token:
             return JsonResponse({"error": "Access token is required"}, status=400)
 
@@ -101,7 +103,11 @@ class ProfileImageUploadView(views.APIView):
                                      region_name=os.getenv('AWS_REGION_NAME'))
         bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
         file_path = f'user_{user.id}/{image.name}'  # S3 내에서 파일을 저장할 경로
-        s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ACL='public-read')
+
+        mime_type = magic.from_buffer(image.read(2048), mime=True)
+        image.seek(0)  
+
+        s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ContentType=mime_type)
 
         image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
         user.profile_img = image_url
@@ -124,6 +130,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 
     def get_serializer_context(self):
         return {'request': self.request}
+
 
 
 # class KakaoLoginView(SocialLoginView):
