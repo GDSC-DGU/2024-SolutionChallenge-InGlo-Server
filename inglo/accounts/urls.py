@@ -5,6 +5,7 @@ from accounts.views import (
     CustomGoogleLoginView,
     AdditionalUserInfoView,
     ProfileImageUploadView,
+    UserUpdateView,
 )
 from accounts.views import UserDetailView
 
@@ -16,6 +17,7 @@ urlpatterns = [
    # path('login-success/', CustomGoogleLoginView.as_view(), name='custom_google_login'), # 배포 환경 용
     path('login-success/', GoogleLoginView.get_response, name='login-success'),
     path('additional_info/', AdditionalUserInfoView.as_view(), name='additional_info'),
-    path('profile-image-upload/', ProfileImageUploadView.as_view(), name='profile_image_upload'),
     path('info/', UserDetailView.as_view(), name='user-info'),
+    path('info/', UserUpdateView.as_view(), name='user-update'),
+    path('info/profile-img/', ProfileImageUploadView.as_view(), name='profile_image_upload'),
 ]

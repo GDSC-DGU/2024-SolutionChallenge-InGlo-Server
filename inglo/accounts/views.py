@@ -90,7 +90,7 @@ class AdditionalUserInfoView(views.APIView):
 class ProfileImageUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
         유저가 업로드한 프로필 이미지를 S3에 저장하고, 이미지 URL을 유저 모델에 저장
         """
@@ -99,23 +99,11 @@ class ProfileImageUploadView(views.APIView):
         if not image:
             return JsonResponse({"error": "No image provided"}, status=400)
 
-        s3_resource = boto3.resource('s3',
-                                     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                                     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-                                     region_name=os.getenv('AWS_REGION_NAME'))
-        bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
-        file_path = f'user_{user.id}/{image.name}'  # S3 내에서 파일을 저장할 경로
+        user = UserService.upload_profile_image(user, image)
+        if not user:
+            return JsonResponse({"error": "Profile image upload failed"}, status=400)
 
-        mime_type = magic.from_buffer(image.read(2048), mime=True)
-        image.seek(0)  
-
-        s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ContentType=mime_type)
-
-        image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
-        user.profile_img = image_url
-        user.save()
-
-        return JsonResponse({"message": "Profile image uploaded successfully", "image_url": image_url})
+        return JsonResponse({"message": "Profile image uploaded successfully"})
 
 class UserDetailView(views.APIView):
     """
@@ -129,16 +117,18 @@ class UserDetailView(views.APIView):
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data)
 
-class LanguageUpdateView(views.APIView):
+class UserUpdateView(views.APIView):
+    """
+    유저 정보 수정
+    """
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        """
-        유저 언어 변경
-        """
         user = request.user
+        name = request.data.get('name')
+        country = request.data.get('country')
         language = request.data.get('language')
-        if UserService.update_language(user, language):
-            return JsonResponse({"message": "Language updated successfully"}, status=200)
+        if UserService.update_user_info(user, name, country, language):
+            return JsonResponse({"message": "User information updated successfully"}, status=200)
         else:
-            return JsonResponse({"error": "Language update failed. Language is set by 'en' "}, status=400)
+            return JsonResponse({"error": "User information update failed"}, status=400)
