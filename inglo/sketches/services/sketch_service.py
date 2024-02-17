@@ -35,6 +35,8 @@ class SketchService:
         sketch.image_url = image_url
         sketch.content = content
         sketch.save()
+        user.sketch_num += 1
+        user.save()
         return sketch
     
     def delete_sketch(sketch_id):
