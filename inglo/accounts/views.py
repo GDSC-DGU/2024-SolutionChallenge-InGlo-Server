@@ -103,7 +103,7 @@ class ProfileImageUploadView(views.APIView):
         file_path = f'user_{user.id}/{image.name}'  # S3 내에서 파일을 저장할 경로
         s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ACL='public-read')
 
-        image_url = f'https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}'
+        image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
         user.profile_img = image_url
         user.save()
 
