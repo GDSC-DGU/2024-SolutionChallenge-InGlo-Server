@@ -33,6 +33,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     liked_total  = models.IntegerField(default=0)
     sketch_num   = models.IntegerField(default=0)
     feedback_total = models.IntegerField(default=0)
+    post_total = models.IntegerField(default=0)
+    global_impact = models.FloatField(default=0)
     additional_info_provided = models.BooleanField(default=False)
     created_at  = models.DateTimeField(auto_now_add=True)
 

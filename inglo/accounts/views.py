@@ -2,20 +2,19 @@ import logging
 import boto3
 import os
 import magic
+import requests
+import secrets
 from dotenv import load_dotenv
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.kakao.views import KakaoOAuth2Adapter
-from allauth.socialaccount.providers.naver.views import NaverOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
-from rest_framework import generics, views
+from rest_framework import views
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
-import requests
-import secrets
+from .services.user_service import UserService
 
 logger = logging.getLogger('django')
 logger.info("Starting the application...")
@@ -92,6 +91,9 @@ class ProfileImageUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        """
+        유저가 업로드한 프로필 이미지를 S3에 저장하고, 이미지 URL을 유저 모델에 저장
+        """
         user = request.user
         image = request.FILES.get('profile_img')  # 'profile_img'는 form-data에서 파일 필드의 이름
         if not image:
@@ -115,19 +117,28 @@ class ProfileImageUploadView(views.APIView):
 
         return JsonResponse({"message": "Profile image uploaded successfully", "image_url": image_url})
 
-class UserDetailView(generics.RetrieveUpdateAPIView):
+class UserDetailView(views.APIView):
     """
-    유저 정보 조회 및 수정
+    유저 정보 조회
     """
-    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
-        return self.request.user
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        UserService.update_global_impact(user)
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data)
 
-    def get_queryset(self):
-        return self.request.user
+class LanguageUpdateView(views.APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_serializer_context(self):
-        return {'request': self.request}
-
+    def patch(self, request, *args, **kwargs):
+        """
+        유저 언어 변경
+        """
+        user = request.user
+        language = request.data.get('language')
+        if UserService.update_language(user, language):
+            return JsonResponse({"message": "Language updated successfully"}, status=200)
+        else:
+            return JsonResponse({"error": "Language update failed. Language is set by 'en' "}, status=400)
