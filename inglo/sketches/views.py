@@ -78,10 +78,23 @@ class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
     
         problem_id = self.kwargs.get('problem_id')
         content = request.data.get('content')
-        hmw = HMWService.create_hmw(problem_id,content, request.user)
+        hmw = HMWService.create_hmw(problem_id,content)
         if hmw:
             return Response({"message": "HMW insert successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "HMW creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, *args, **kwargs):
+        """
+        클라이언트로부터 받은 hmw_id에 이를 선택하게 함
+        """
+        
+        hmw_id = request.data.get('hmw_id')
+        user = request.user
+        problem_id = self.kwargs.get('problem_id')
+        hmw = HMWService.update_hmw(user, hmw_id, problem_id)
+        if hmw:
+            return Response({"message": "HMW update successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"error": "HMW update failed"}, status=status.HTTP_400_BAD_REQUEST)
         
 class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     
