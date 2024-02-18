@@ -8,7 +8,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.http import JsonResponse
-from rest_framework import views
+from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
 from .serializers import UserSerializer
 from .services.user_service import UserService
@@ -48,7 +48,6 @@ class CustomGoogleLoginView(views.APIView):
         if not access_token:
             return JsonResponse({"error": "Access token is required"}, status=400)
 
-        # Google 사용자 정보 엔드포인트
         info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
         response = requests.get(info_url, params={'access_token': access_token})
         user_info = response.json()
@@ -92,7 +91,7 @@ class ProfileImageUploadView(views.APIView):
         유저가 업로드한 프로필 이미지를 S3에 저장하고, 이미지 URL을 유저 모델에 저장
         """
         user = request.user
-        image = request.FILES.get('profile_img')  # 'profile_img'는 form-data에서 파일 필드의 이름
+        image = request.FILES.get('image')  # 'profile_img'는 form-data에서 파일 필드의 이름
         if not image:
             return JsonResponse({"error": "No image provided"}, status=400)
 
@@ -102,25 +101,19 @@ class ProfileImageUploadView(views.APIView):
 
         return JsonResponse({"message": "Profile image uploaded successfully"})
 
-class UserDetailView(views.APIView):
+class UserDetailViewSet(viewsets.GenericViewSet, viewsets.mixins.RetrieveModelMixin, viewsets.mixins.UpdateModelMixin):
     """
     유저 정보 조회
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         user = request.user
         UserService.update_global_impact(user)
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data)
 
-class UserUpdateView(views.APIView):
-    """
-    유저 정보 수정
-    """
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         user = request.user
         name = request.data.get('name')
         country = request.data.get('country')

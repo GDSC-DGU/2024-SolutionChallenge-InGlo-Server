@@ -53,16 +53,17 @@ class PostDetailViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixi
             return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
     
     
-    def patch(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         """
         content를 받아 Post를 업데이트
         """
         post_id = self.kwargs.get('post_id')
         title = request.data.get('title')
         content = request.data.get('content')
+        image = request.FILES.get('image')
 
         if content:
-            post = PostService.update_post(request.user, post_id, title, content)
+            post = PostService.update_post(request.user, post_id, title, content, image)
             if post:
                 serializer = PostSerializer(post)
                 return Response(serializer.data, status=status.HTTP_200_OK)
@@ -120,7 +121,7 @@ class FeedbackUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateModelMix
     serializer_class = FeedbackSerializer
     permission_classes = [IsAuthenticated]
         
-    def patch(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         """
         content를 받아 Feedback을 업데이트
         """

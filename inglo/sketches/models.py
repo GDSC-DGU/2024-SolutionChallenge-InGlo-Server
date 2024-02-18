@@ -16,9 +16,9 @@ class Sketch(models.Model):
     description = models.TextField(blank=True, null=True)
     content = models.TextField(blank=True, null=True)
     image_url = models.URLField(blank=True, null=True)
-    problem = models.ForeignKey(Problem, on_delete=models.SET_NULL, null=True, related_name='sketches')
-    hmw = models.ForeignKey('HMW', on_delete=models.SET_NULL, null=True, related_name='sketches')
-    crazy8stack = models.ForeignKey('Crazy8Stack', on_delete=models.SET_NULL, null=True, related_name='sketches')
+    problem = models.ForeignKey(Problem, on_delete=models.SET_NULL, null=True, related_name='sketches', blank=True)
+    hmw = models.ForeignKey('HMW', on_delete=models.SET_NULL, null=True, related_name='sketches', blank=True)
+    crazy8stack = models.ForeignKey('Crazy8Stack', on_delete=models.SET_NULL, null=True, related_name='sketches', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -31,7 +31,7 @@ class HMW(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.content
+        return f"{self.id} - {self.content}"
 
 class Crazy8Stack(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE, related_name='crazy8stacks')
