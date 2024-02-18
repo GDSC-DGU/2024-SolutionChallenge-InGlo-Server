@@ -97,7 +97,7 @@ class IssueCommentUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateMode
 
     permission_classes = [IsAuthenticated]
 
-    def patch(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         """
         댓글 수정
         """

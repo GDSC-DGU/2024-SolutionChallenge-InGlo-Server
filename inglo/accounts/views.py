@@ -1,7 +1,4 @@
 import logging
-import boto3
-import os
-import magic
 import requests
 import secrets
 from dotenv import load_dotenv
@@ -99,7 +96,7 @@ class ProfileImageUploadView(views.APIView):
         if not image:
             return JsonResponse({"error": "No image provided"}, status=400)
 
-        user = UserService.upload_profile_image(user, image)
+        user = UserService.update_user_profile_image(user, image)
         if not user:
             return JsonResponse({"error": "Profile image upload failed"}, status=400)
 
