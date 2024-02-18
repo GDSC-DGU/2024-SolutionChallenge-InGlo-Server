@@ -5,7 +5,7 @@ from sketches.serializers import SketchNestedSerializer
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ['id', 'user', 'title', 'image_url' , 'sdgs', 'likes', 'created_at']
+        fields = ['id', 'user', 'title', 'content', 'image_url' , 'sdgs', 'likes', 'created_at']
 
 class FeedbackSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()  # 사용자 이름 표시

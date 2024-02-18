@@ -53,10 +53,23 @@ class PostService:
         
     @staticmethod
     @transaction.atomic
-    def update_post(user, post_id, title, content):
+    def update_post(user, post_id, title, content, image):
         post = Post.objects.get(id=post_id)
         if post.user != user:
             return None
+        if image is not None:
+            s3_resource = boto3.resource('s3',
+                                     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                                     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+                                     region_name=os.getenv('AWS_REGION_NAME'))
+            bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+            file_path = f'user_{user.id}/post_{post_id}'
+            mime_type = magic.from_buffer(image.read(2048), mime=True)
+            image.seek(0)
+            s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ContentType=mime_type)
+            image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
+            post.image_url = image_url
+        
         post.content = content
         post.title = title
         post.save()
