@@ -8,12 +8,18 @@ RUN pip install torch torchvision
 RUN pip install --upgrade transformers
 RUN pip install mysqlclient
 
+
 WORKDIR /usr/src/app
 
 COPY . .
 
+# 스크립트 파일 복사
+COPY entrypoint.sh /usr/src/app/inglo/
+
 WORKDIR ./inglo
 
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+# 스크립트 실행
+CMD ["/usr/src/app/inglo/entrypoint.sh"]
+
 
 EXPOSE 8000
