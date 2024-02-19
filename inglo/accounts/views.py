@@ -18,50 +18,14 @@ logger.info("Starting the application...")
 load_dotenv()
 
 # ----------------------- api 테스트용
-# class GoogleLoginView(SocialLoginView):
-#     adapter_class = GoogleOAuth2Adapter
-#     callback_url = 'http://127.0.0.1:8000/api/accounts/google/login/callback/'
-#     client_class = OAuth2Client
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = 'https://dongkyeom.com/api/v1/accounts/google/login/callback/'
+    client_class = OAuth2Client
 
-#     def get_response(self):
-#         logger.info("GoogleLoginView.get_response() called")
-#         user = self.user
-
-#         refresh = RefreshToken.for_user(user)
-#         response_data = {
-#             'refresh': str(refresh),
-#             'access': str(refresh.access_token),
-#         }
-
-#         logger.info(f"JWT Tokens for user {user.email} (ID: {user.id}): {response_data}")
-
-#         return JsonResponse(response_data)
-    
-# ----------------------- api 테스트용
-    
-User = get_user_model()
-
-class CustomGoogleLoginView(views.APIView):
-    def post(self, request, *args, **kwargs):
-        access_token = request.data.get('access_token')
-        logger.info(f"CustomGoogleLoginView.post() called with access_token: {access_token}")
-        if not access_token:
-            return JsonResponse({"error": "Access token is required"}, status=400)
-
-        info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
-        response = requests.get(info_url, params={'access_token': access_token})
-        user_info = response.json()
-
-        if "error" in user_info:
-            return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
-
-        user, created = User.objects.get_or_create(email=user_info['email'])
-
-        # 새로운 사용자의 경우 임의의 비밀번호 설정
-        if created:
-            random_password = secrets.token_urlsafe()
-            user.set_password(random_password)
-            user.save()
+    def get_response(self):
+        logger.info("GoogleLoginView.get_response() called")
+        user = self.user
 
         refresh = RefreshToken.for_user(user)
         response_data = {
@@ -69,7 +33,46 @@ class CustomGoogleLoginView(views.APIView):
             'access': str(refresh.access_token),
         }
 
+        logger.info(f"JWT Tokens for user {user.email} (ID: {user.id}): {response_data}")
+
         return JsonResponse(response_data)
+    
+# ----------------------- api 테스트용
+    
+# User = get_user_model()
+
+# class CustomGoogleLoginView(views.APIView):
+#     def post(self, request, *args, **kwargs):
+
+#         authentication_classes = []  
+#         permission_classes = []  
+#         access_token = request.data.get('access_token')
+#         logger.info(f"CustomGoogleLoginView.post() called with access_token: {access_token}")
+#         if not access_token:
+#             return JsonResponse({"error": "Access token is required"}, status=400)
+
+#         info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
+#         response = requests.get(info_url, params={'access_token': access_token})
+#         user_info = response.json()
+
+#         if "error" in user_info:
+#             return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
+
+#         user, created = User.objects.get_or_create(email=user_info['email'])
+
+#         # 새로운 사용자의 경우 임의의 비밀번호 설정
+#         if created:
+#             random_password = secrets.token_urlsafe()
+#             user.set_password(random_password)
+#             user.save()
+
+#         refresh = RefreshToken.for_user(user)
+#         response_data = {
+#             'refresh': str(refresh),
+#             'access': str(refresh.access_token),
+#         }
+
+#         return JsonResponse(response_data)
     
 class AdditionalUserInfoView(views.APIView):
     permission_classes = [IsAuthenticated]

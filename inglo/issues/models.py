@@ -2,11 +2,11 @@ from django.db import models
 from django.conf import settings
 
 class Issue(models.Model):
-    link = models.URLField()
-    writer = models.CharField(max_length=100, blank=True, null=True, default='unknown')
-    title = models.CharField(max_length=255)
+    link = models.URLField(max_length=500)
+    writer = models.CharField(max_length=500, blank=True, null=True, default='unknown')
+    title = models.CharField(max_length=500)
     content = models.TextField()
-    image_url = models.URLField(blank=True, null=True)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -16,11 +16,11 @@ class IssueList(models.Model):
     issue = models.OneToOneField(Issue, on_delete=models.CASCADE, related_name='list')
     views = models.IntegerField(default=0)
     likes = models.IntegerField(default=0)
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=500)
     description = models.TextField(null=True, blank=True)
     country = models.IntegerField() # 국가 번호로
     sdgs = models.IntegerField() # SDGs 번호로
-    image_url = models.URLField(blank=True, null=True)
+    image_url = models.URLField(max_length=1000,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
