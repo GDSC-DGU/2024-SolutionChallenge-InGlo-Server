@@ -127,6 +127,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = ['https://dongkyeom.com']
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
 
