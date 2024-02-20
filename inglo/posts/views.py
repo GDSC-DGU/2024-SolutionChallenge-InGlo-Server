@@ -29,10 +29,9 @@ class PostViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateM
         content = request.data.get('content')
         sketch_id = request.data.get('sketch_id')
         sdgs = request.data.get('sdgs')
-        image = request.data.get('image')
 
         if content:
-            post = PostService.create_post(request.user, sketch_id, title, image, content, sdgs)
+            post = PostService.create_post(request.user, sketch_id, title, content, sdgs)
             serializer = PostSerializer(post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -60,10 +59,9 @@ class PostDetailViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixi
         post_id = self.kwargs.get('post_id')
         title = request.data.get('title')
         content = request.data.get('content')
-        image = request.FILES.get('image')
 
         if content:
-            post = PostService.update_post(request.user, post_id, title, content, image)
+            post = PostService.update_post(request.user, post_id, title, content)
             if post:
                 serializer = PostSerializer(post)
                 return Response(serializer.data, status=status.HTTP_200_OK)
