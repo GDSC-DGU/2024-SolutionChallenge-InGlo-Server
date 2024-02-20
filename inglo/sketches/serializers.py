@@ -8,9 +8,15 @@ class ProblemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class HMWSerializer(serializers.ModelSerializer):
+    problem_content = serializers.SerializerMethodField()
     class Meta:
         model = HMW
-        fields = '__all__'
+        fields = ['id','problem','problem_content','content','created_at']
+    
+    def get_problem_content(self, obj):
+        if obj.problem:
+            return ProblemSerializer(obj.problem).data
+        return None
 
 class Crazy8ContentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,10 +30,14 @@ class Crazy8ContentForSketchDetailSerializer(serializers.ModelSerializer):
 
 class Crazy8StackSerializer(serializers.ModelSerializer):
     contents = Crazy8ContentSerializer(many=True, read_only=True)
-
+    hmw_content = serializers.SerializerMethodField()
     class Meta:
         model = Crazy8Stack
-        fields = '__all__'
+        fields = ['id','problem', 'hmw_content','created_at']
+    
+    def get_hmw_content(self, obj):
+        if obj.problem:
+            return HMW.objects.filter(problem=obj.problem).content
 
 class SketchNestedSerializer(serializers.ModelSerializer):
     problem_content = serializers.SerializerMethodField()
