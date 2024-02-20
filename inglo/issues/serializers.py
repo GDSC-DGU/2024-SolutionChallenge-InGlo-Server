@@ -7,10 +7,15 @@ class IssueListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class IssueCommentSerializer(serializers.ModelSerializer):
-    
+    user_name = serializers.SerializerMethodField()
+
     class Meta:
         model = IssueComment
-        fields = '__all__'
+        fields = ['id', 'user' , 'user_name', 'content', 'parent_comment', 'created_at']
+
+    def get_user_name(self, obj):
+        user = self.context['request'].user
+        return user.name
 
 class IssueLikeSerializer(serializers.ModelSerializer):
     class Meta:
