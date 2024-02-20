@@ -1,6 +1,9 @@
 import torch
-from transformers import BertTokenizer
+from transformers import BertTokenizer, pipeline
 from model import BERTClass
+
+def get_overlapped_chunks(text, chunk, overlap):
+    return [text[i:i+chunk] for i in range(0, len(text), chunk-overlap)]
 
 def load_model(model_path, device):
     model = BERTClass().to(device)
@@ -31,12 +34,28 @@ def predict(model, tokenizer, text, max_len, device):
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+summarizer = pipeline('summarization', model='facebook/bart-large-cnn', device=0)
 model_path = "./output_multi_class/best_model_state.pt"
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = load_model(model_path, device)
 
-raw_text = "The Convention on the Conservation of Migratory Species of Wild Animals (CMS) has launched the first-ever comprehensive assessment of the state of the world’s migratory species. The report warns that almost half of the world’s migratory species are in decline and more than a fifth are threatened with extinction, including nearly all of CMS-listed fish. It provides a set of recommendations for priority action to save migratory animals."
-max_len = 256
-predictions = predict(model, tokenizer, raw_text, max_len, device)
-print(f'text: {raw_text}')
-print(f'sdg: {predictions.item()+1}')
+text= ""
+
+# Summarize each chunk
+outs = []
+for chunk in get_overlapped_chunks(text, 1024, 32):
+    out = summarizer(chunk, max_length=128, min_length=32)
+    outs.append(out[0]['summary_text'])
+
+# Combine the chunk summaries into a single text
+text = ' '.join(outs)
+
+if len(tokenizer.tokenize(text)) > 512:
+    summary = summarizer(text, max_length=512)[0]['summary_text']
+else:
+    summary = text
+
+predictions = predict(model, tokenizer, summary, max_len=256, device=device)
+
+print(f'Summary: {summary}')
+print(f'SDG: {predictions.item()+1}')

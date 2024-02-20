@@ -13,5 +13,3 @@ class BERTClass(torch.nn.Module):
         output_dropout = self.dropout(output.pooler_output)
         output = self.linear(output_dropout)
         return output
-
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
