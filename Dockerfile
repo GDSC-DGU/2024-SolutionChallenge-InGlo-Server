@@ -7,6 +7,7 @@ RUN pip3 install -r /usr/src/app/requirements.txt
 RUN pip install torch torchvision
 RUN pip install --upgrade transformers
 RUN pip install mysqlclient
+RUN pip install aioboto3
 
 
 WORKDIR /usr/src/app

@@ -7,32 +7,103 @@ from datetime import timedelta
 from ..utils.classifier import classify_news
 from ..utils.news_api import fetch_news
 from dotenv import load_dotenv
-import requests
+from dateutil.parser import parse as parse_datetime
+from datetime import datetime
 from io import BytesIO
+import logging
 import os
-import boto3
 import magic
 from urllib.parse import urlparse
+import aioboto3
+import aiohttp
+import asyncio
+from asgiref.sync import sync_to_async
 
+logger = logging.getLogger('django')
 load_dotenv()
 
 class IssueService:
+
     @staticmethod
-    @transaction.atomic
-    def update_issues_from_news(keyword):
-        today = timezone.now()
-        news_items = fetch_news(keyword, today)
-        for item in news_items:
-            country, sdgs = classify_news(item.get('title', ''), item.get('content', ''))
-            if not country.isdigit() or not sdgs.isdigit() or not 1 <= int(country) <= 10 or not 1 <= int(sdgs) <= 17:
+    async def is_valid_url(url):
+        try:
+            result = urlparse(url)
+            return all([result.scheme, result.netloc])
+        except Exception:
+            logger.error(logging.ERROR, f"Error checking if {url} is a valid URL")
+            return False
+    @staticmethod
+    async def provide_none():
+        return None
+        
+    @staticmethod
+    async def download_and_upload_image(session, image_url, file_path):
+        try:
+            async with session.get(image_url) as response:
+                response.raise_for_status()
+                content = await response.read()
+                image = BytesIO(content)
+                mime_type = magic.from_buffer(image.read(2048), mime=True)
+                image.seek(0)
+                bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
+                region_name = os.getenv('AWS_REGION_NAME')
+                session = aioboto3.Session()
+                async with session.client('s3', region_name=os.getenv('AWS_REGION_NAME'),
+                                          aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                                          aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')) as s3:
+                    await s3.upload_fileobj(image, os.getenv('AWS_STORAGE_BUCKET_NAME'), file_path, ExtraArgs={"ContentType": mime_type})
+
+                return f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{file_path}"
+        except Exception as e:
+            logger.error(logging.ERROR,f"Error downloading or uploading image: {e}")
+            return None
+
+    @staticmethod
+    async def update_issues_from_news_async(news_items):
+
+        tasks = []
+        
+        async with aiohttp.ClientSession() as session:
+
+            insert_list = []
+
+            for item in news_items:
+                if await sync_to_async(Issue.objects.filter(content=item.get('content')).exists)():
+                    continue
+                insert_list.append(item)
+                image_url = item.get('image_url', '')
+                file_path = f"news_images/{item.get('article_id','')}"
+
+                if image_url and await IssueService.is_valid_url(image_url):
+                    task = IssueService.download_and_upload_image(session, image_url, file_path)  # await 추가
+                    tasks.append(task)
+                else:
+                    tasks.append(IssueService.provide_none())
+
+
+            images = await asyncio.gather(*tasks,return_exceptions=True)  # 각 작업의 결과를 기다립니다.
+            await sync_to_async(IssueService.save_issues_and_images, thread_sensitive=True)(insert_list, images)
+
+    @staticmethod
+    def save_issues_and_images(insert_list, images):
+        for item, image_url in zip(insert_list, images):
+            if item.get('content') is None: #본문이 비어있으면 for문의 다음 item으로 넘어감
+                    continue
+            
+            sdgs = classify_news(item.get('content', ''))
+
+            if not sdgs.isdigit() or not 1 <= int(sdgs) <= 17: #분류모델 돌린 결과 나온 sdgs가 1~17 사이의 숫자가 아니면 for문의 다음 item으로 넘어감
                 continue
-                
+
+            pub_date = item.get('pubDate', '')
+            created_at = parse_datetime(pub_date) if parse_datetime(pub_date) is not None else datetime.now()
             new_issue = Issue.objects.create(
-                link=item.get('url', ''),
-                writer=item.get('author', ''),
+                link=item.get('link', ''),
+                writer=item.get('creator', ''),
                 title=item.get('title', ''),
                 content=item.get('content', ''),
-                created_at=item.get('publishedAt', '')
+                image_url=image_url,
+                created_at=created_at
             )
             issue_list = IssueList.objects.create(
                 issue=new_issue,
@@ -40,51 +111,16 @@ class IssueService:
                 likes=0,
                 title=item.get('title', ''),
                 description=item.get('description', ''),
-                country=country,
+                country=item.get('country', ''),
                 sdgs=sdgs,
-                created_at=item.get('publishedAt', '')
+                image_url=image_url,
+                created_at=created_at
             )
 
-            image_url = item.get('urlToImage', '')
-
-            s3_resource = boto3.resource('s3',
-                                     aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                                     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-                                     region_name=os.getenv('AWS_REGION_NAME'))
-            bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
-        
-            file_path = f'news_images/{new_issue}'  # S3 내에서 파일을 저장할 경로
-            
-            # URL이 유효한지 확인하는 함수 추가
-            def is_valid_url(url):
-                try:
-                    result = urlparse(url)
-                    return all([result.scheme, result.netloc])
-                except Exception:
-                    return False
-
-            # URL 유효성 검사 후 처리
-            if image_url and is_valid_url(image_url):
-                try:
-                    response = requests.get(image_url)
-                    response.raise_for_status()  # 요청 실패 시 예외 발생
-
-                    image = BytesIO(response.content)
-                    mime_type = magic.from_buffer(image.read(2048), mime=True)
-                    image.seek(0)  
-
-                    s3_resource.Bucket(bucket_name).put_object(Key=file_path, Body=image, ContentType=mime_type)
-
-                    image_url = f"https://{bucket_name}.s3.{os.getenv('AWS_REGION_NAME')}.amazonaws.com/{file_path}"
-                    new_issue.image_url = image_url
-                    new_issue.save()
-                    issue_list.image_url = image_url
-                    issue_list.save()
-
-                except Exception as e:
-                    print(f"Error downloading or uploading image: {e}")
-            else:
-                print("Invalid or missing image URL.")
+    @staticmethod
+    def update_issues_from_news(keyword):
+        news_items = fetch_news(keyword)
+        asyncio.run(IssueService.update_issues_from_news_async(news_items))
 
     @staticmethod
     @transaction.atomic

@@ -18,7 +18,7 @@ class IssueList(models.Model):
     likes = models.IntegerField(default=0)
     title = models.CharField(max_length=500)
     description = models.TextField(null=True, blank=True)
-    country = models.IntegerField() # 국가 번호로
+    country = models.CharField(max_length=100)
     sdgs = models.IntegerField() # SDGs 번호로
     image_url = models.URLField(max_length=1000,blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

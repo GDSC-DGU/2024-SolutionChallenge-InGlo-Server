@@ -6,7 +6,6 @@ class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
     sketch = models.ForeignKey(Sketch, on_delete=models.CASCADE, related_name='posts')
     title = models.CharField(max_length=255, blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True)
     content = models.TextField()
     sdgs = models.IntegerField() # 반정규화. Sdgs 번호
     likes = models.IntegerField(default=0, blank=True, null=True)
