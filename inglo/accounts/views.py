@@ -7,7 +7,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from django.http import JsonResponse
 from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -36,7 +36,7 @@ class CustomGoogleLoginView(views.APIView):
 
         if "error" in user_info:
             return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
-
+        
         user, created = User.objects.get_or_create(email=user_info['email'])
 
         # 새로운 사용자의 경우 임의의 비밀번호 설정
@@ -63,11 +63,16 @@ class CustomTokenRefreshView(TokenRefreshView):
     
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get('refresh')
-        logger.info("refresh_token: " + refresh_token)
+
+        # 리프레시 토큰 유효성 검증
+        verification_response = TokenVerifyView.as_view()(request._request)
+        if verification_response.status_code != 200:
+            return JsonResponse({"error": "Invalid or expired refresh token"}, status=401)
+        
         user = User.objects.filter(refresh_token=refresh_token).first()
         if user:
-            refresh_token = RefreshToken.for_user(user)  # 새로운 리프레시 토큰 생성
-            user.refresh_token = str(refresh_token)  # 새로운 리프레시 토큰 저장
+            refresh_token = RefreshToken.for_user(user)
+            user.refresh_token = str(refresh_token) 
             user.save()
 
             response_data = {
