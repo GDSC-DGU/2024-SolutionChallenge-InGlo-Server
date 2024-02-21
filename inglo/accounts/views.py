@@ -7,7 +7,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenError
 from django.http import JsonResponse
 from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -64,15 +64,14 @@ class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get('refresh')
 
-        # 리프레시 토큰 유효성 검증
-        verification_response = TokenVerifyView.as_view()(request._request)
-        if verification_response.status_code != 200:
-            return JsonResponse({"error": "Invalid or expired refresh token"}, status=401)
-        
-        user = User.objects.filter(refresh_token=refresh_token).first()
-        if user:
+        # 리프레시 토큰의 유효성과 유효 기간 검증
+        try:
+            token = RefreshToken(refresh_token)
+            user = User.objects.get(id=token['user_id'], refresh_token=refresh_token)
+
+            # 새로운 리프레시 토큰과 액세스 토큰 발급
             refresh_token = RefreshToken.for_user(user)
-            user.refresh_token = str(refresh_token) 
+            user.refresh_token = str(refresh_token)
             user.save()
 
             response_data = {
@@ -80,7 +79,10 @@ class CustomTokenRefreshView(TokenRefreshView):
                 'access_token': str(refresh_token.access_token),
             }
             return JsonResponse(response_data)
-        return JsonResponse({"error": "Invalid refresh token"}, status=401)
+        except TokenError:
+            return JsonResponse({"error": "Invalid or expired refresh token"}, status=401)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
     
 class ProfileImageUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
