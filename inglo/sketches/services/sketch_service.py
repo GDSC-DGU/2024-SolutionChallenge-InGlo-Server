@@ -10,6 +10,9 @@ from urllib.parse import urlparse
 
 class SketchService:
 
+    def get_sketches_by_user(user):
+        return Sketch.objects.filter(user=user).order_by('-created_at')
+
     def get_sketch_by_problem_id(problem_id):
         problem = Problem.objects.get(id=problem_id)
         return Sketch.objects.filter(problem=problem).order_by('-created_at')

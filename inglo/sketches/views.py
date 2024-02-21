@@ -49,12 +49,14 @@ class SketchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Creat
             return Response({"message": "Problem chosen successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Sketch chosen failed"}, status=status.HTTP_400_BAD_REQUEST)
     
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         """
         유저가 작성한 솔루션 스케치 리스트 반환
         """
-        
-        return SketchService.get_sketches_by_user(self.request.user) 
+        user = request.user
+        sketches = SketchService.get_sketches_by_user(user)
+        serializer = SketchNestedSerializer(sketches, many=True)
+        return Response(serializer.data)
 
 class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
 
