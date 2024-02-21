@@ -1,13 +1,18 @@
 from ..models import Feedback
 from django.db import transaction
 from ..models import Post
+from django.http import Http404
 
 
 class FeedbackService:
 
     @staticmethod
     def get_feedback_list(post_id):
-        return Feedback.objects.filter(post_id=post_id)
+        try:
+            feedback_list = Feedback.objects.filter(post_id=post_id)
+            return feedback_list
+        except Feedback.DoesNotExist:
+            return Feedback.objects.none()
 
     @staticmethod
     @transaction.atomic
@@ -15,14 +20,18 @@ class FeedbackService:
         """
         user, post_id, content를 받아 Feedback을 생성
         """
-        post = Post.objects.get(id=post_id)
-        if parent_id:
-            parent_feedback = Feedback.objects.filter(id=parent_id).first()
-        else:
-            parent_feedback = None
-        user.feedback_total += 1
-        user.save()
-        return Feedback.objects.create(user=user, post=post, content=content, parent_feedback=parent_feedback)
+        try:
+            post = Post.objects.get(id=post_id)
+            if parent_id:
+                parent_feedback = Feedback.objects.filter(id=parent_id).first()
+            else:
+                parent_feedback = None
+            user.feedback_total += 1
+            user.save()
+            feedback = Feedback.objects.create(user=user, post=post, content=content, parent_feedback=parent_feedback)
+            return feedback
+        except (ValueError, TypeError, Post.DoesNotExist):
+            return None
     
     @staticmethod
     @transaction.atomic
@@ -30,12 +39,15 @@ class FeedbackService:
         """
         user, feedback_id, content를 받아 Feedback을 수정
         """
-        feedback = Feedback.objects.get(id=feedback_id)
-        if feedback.user != user:
-            return None
-        feedback.content = content
-        feedback.save()
-        return feedback
+        try:
+            feedback = Feedback.objects.get(id=feedback_id)
+            if feedback.user != user:
+                return None
+            feedback.content = content
+            feedback.save()
+            return feedback
+        except Feedback.DoesNotExist:
+            return Http404("Feedback does not exist")
     
     @staticmethod
     @transaction.atomic
@@ -43,10 +55,14 @@ class FeedbackService:
         """
         user, feedback_id를 받아 Feedback을 삭제
         """
-        feedback = Feedback.objects.get(id=feedback_id)
-        if feedback.user != user:
-            return None
-        feedback.delete()
-        return feedback
-    
+        try:
+            feedback = Feedback.objects.get(id=feedback_id)
+            if feedback.user != user:
+                return None
+            feedback.delete()
+            return feedback
+        except Feedback.DoesNotExist:
+            return Http404("Feedback does not exist")
+        
+        
     
