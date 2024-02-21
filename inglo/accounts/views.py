@@ -11,7 +11,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenError
 from django.http import JsonResponse
 from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserSemiSerializer
 from .services.user_service import UserService
 
 logger = logging.getLogger('django')
@@ -139,5 +139,5 @@ class SemiUserInfoView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        serializer = UserSerializer(user)
+        serializer = UserSemiSerializer(user)
         return JsonResponse(serializer.data)
