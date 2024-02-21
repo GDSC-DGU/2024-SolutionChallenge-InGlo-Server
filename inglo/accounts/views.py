@@ -7,6 +7,7 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.http import JsonResponse
 from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -18,53 +19,14 @@ logger.info("Starting the application...")
 load_dotenv()
 
 # ----------------------- api 테스트용
-class GoogleLoginView(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = 'https://dongkyeom.com/api/v1/accounts/google/login/callback/'
-    client_class = OAuth2Client
+# class GoogleLoginView(SocialLoginView):
+#     adapter_class = GoogleOAuth2Adapter
+#     callback_url = 'https://dongkyeom.com/api/v1/accounts/google/login/callback/'
+#     client_class = OAuth2Client
 
-    def get_response(self):
-        logger.info("GoogleLoginView.get_response() called")
-        user = self.user
-
-        refresh = RefreshToken.for_user(user)
-        response_data = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-
-        logger.info(f"JWT Tokens for user {user.email} (ID: {user.id}): {response_data}")
-
-        return JsonResponse(response_data)
-    
-# ----------------------- api 테스트용
-    
-# User = get_user_model()
-
-# class CustomGoogleLoginView(views.APIView):
-#     def post(self, request, *args, **kwargs):
-
-#         authentication_classes = []  
-#         permission_classes = []  
-#         access_token = request.data.get('access_token')
-#         logger.info(f"CustomGoogleLoginView.post() called with access_token: {access_token}")
-#         if not access_token:
-#             return JsonResponse({"error": "Access token is required"}, status=400)
-
-#         info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
-#         response = requests.get(info_url, params={'access_token': access_token})
-#         user_info = response.json()
-
-#         if "error" in user_info:
-#             return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
-
-#         user, created = User.objects.get_or_create(email=user_info['email'])
-
-#         # 새로운 사용자의 경우 임의의 비밀번호 설정
-#         if created:
-#             random_password = secrets.token_urlsafe()
-#             user.set_password(random_password)
-#             user.save()
+#     def get_response(self):
+#         logger.info("GoogleLoginView.get_response() called")
+#         user = self.user
 
 #         refresh = RefreshToken.for_user(user)
 #         response_data = {
@@ -72,19 +34,70 @@ class GoogleLoginView(SocialLoginView):
 #             'access': str(refresh.access_token),
 #         }
 
+#         logger.info(f"JWT Tokens for user {user.email} (ID: {user.id}): {response_data}")
+
 #         return JsonResponse(response_data)
     
-class AdditionalUserInfoView(views.APIView):
-    permission_classes = [IsAuthenticated]
+# ----------------------- api 테스트용
+    
+User = get_user_model()
+
+class CustomGoogleLoginView(views.APIView):
+
+    authentication_classes = []  
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-        user.name = request.data.get('name')
-        user.country = request.data.get('country')
-        user.language = request.data.get('language')
-        user.additional_info_provided = True
+        access_token = request.data.get('access_token')
+        if not access_token:
+            return JsonResponse({"error": "Access token is required"}, status=400)
+
+        info_url = 'https://www.googleapis.com/oauth2/v3/userinfo'
+        response = requests.get(info_url, params={'access_token': access_token})
+        user_info = response.json()
+
+        if "error" in user_info:
+            return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
+
+        user, created = User.objects.get_or_create(email=user_info['email'])
+
+        # 새로운 사용자의 경우 임의의 비밀번호 설정
+        if created:
+            random_password = secrets.token_urlsafe()
+            user.set_password(random_password)
+            user.save()
+
+        refresh_token = RefreshToken.for_user(user)
+        user.refresh_token = str(refresh_token)
         user.save()
-        return JsonResponse({"message": "Additional user information updated successfully"}, status=200)
+
+        response_data = {
+            'refresh_token': str(refresh_token),
+            'access_token': str(refresh_token.access_token),
+        }
+
+        return JsonResponse(response_data)
+    
+class CustomTokenRefreshView(TokenRefreshView):
+
+    authentication_classes = []  
+    permission_classes = []
+    
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get('refresh')
+        logger.info("refresh_token: " + refresh_token)
+        user = User.objects.filter(refresh_token=refresh_token).first()
+        if user:
+            refresh_token = RefreshToken.for_user(user)  # 새로운 리프레시 토큰 생성
+            user.refresh_token = str(refresh_token)  # 새로운 리프레시 토큰 저장
+            user.save()
+
+            response_data = {
+                'refresh_token': str(refresh_token),
+                'access_token': str(refresh_token.access_token),
+            }
+            return JsonResponse(response_data)
+        return JsonResponse({"error": "Invalid refresh token"}, status=401)
     
 class ProfileImageUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -125,3 +138,13 @@ class UserDetailViewSet(viewsets.GenericViewSet, viewsets.mixins.RetrieveModelMi
             return JsonResponse({"message": "User information updated successfully"}, status=200)
         else:
             return JsonResponse({"error": "User information update failed"}, status=400)
+        
+class AdditionalInfoProvidedView(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        logger.info("access_token: " + request.headers.get('Authorization'))
+        user = request.user
+        return JsonResponse({"additional_info_provided": user.additional_info_provided})
+

@@ -40,5 +40,6 @@ class UserService:
         user.name = name
         user.country = country
         user.language = language
+        user.additional_info_provided = True
         user.save()
         return user

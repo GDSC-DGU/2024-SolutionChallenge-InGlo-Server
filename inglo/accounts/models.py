@@ -36,6 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     post_total = models.IntegerField(default=0)
     global_impact = models.FloatField(default=0)
     additional_info_provided = models.BooleanField(default=False)
+    refresh_token = models.TextField(blank=True, null=True)
     created_at  = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
