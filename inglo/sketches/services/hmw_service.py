@@ -32,6 +32,6 @@ class HMWService:
                 sketch.hmw = hmw
                 sketch.save()
                 return hmw
+            return None
         except (HMW.DoesNotExist, ValueError, TypeError):
             return None
-        return None

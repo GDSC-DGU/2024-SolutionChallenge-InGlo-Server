@@ -26,31 +26,38 @@ class Crazy8Service:
     @staticmethod
     @transaction.atomic
     def create_crazy8(problem_id, content, user):
-        problem = Problem.objects.get(id = problem_id)
-        sketch = Sketch.objects.filter(user=user, problem=problem_id).order_by('-created_at').first()
-        if sketch.crazy8stack == None:
-            crazy8stack = Crazy8Stack.objects.create(problem=problem)
-            sketch.crazy8stack = crazy8stack
-            sketch.save()
-        if Crazy8Content.objects.filter(crazy8stack=sketch.crazy8stack).count() >= 8:
-            raise ValidationError("Maximum number of Crazy8Contents reached. No more can be created.", code=400)
-        crazy8content = Crazy8Content.objects.create(crazy8stack=sketch.crazy8stack, content=content)
-        return crazy8content
+        try:
+            problem = Problem.objects.get(id = problem_id)
+            sketch = Sketch.objects.filter(user=user, problem=problem_id).order_by('-created_at').first()
+            if sketch.crazy8stack == None:
+                crazy8stack = Crazy8Stack.objects.create(problem=problem)
+                sketch.crazy8stack = crazy8stack
+                sketch.save()
+            if Crazy8Content.objects.filter(crazy8stack=sketch.crazy8stack).count() >= 8:
+                raise ValidationError("Maximum number of Crazy8Contents reached. No more can be created.", code=400)
+            crazy8content = Crazy8Content.objects.create(crazy8stack=sketch.crazy8stack, content=content)
+            return crazy8content
+        except (Problem.DoesNotExist, ValueError, TypeError):
+            return None
     
     @staticmethod
     @transaction.atomic
     def toggle_vote(user, crazy8content_id):
-        new_crazy8content = Crazy8Content.objects.get(id=crazy8content_id)
-        voted_crazy8 = Crazy8Vote.objects.filter(user=user).first()
-        if voted_crazy8: # 이미 투표한 것이 있다면, 해당 투표를 취소하고 새로운 투표를 추가
-            old_crazy8content = voted_crazy8.crazy8content
-            old_crazy8content.vote_count -= 1
-            old_crazy8content.save()
-            voted_crazy8.delete()
+        try:
+            new_crazy8content = Crazy8Content.objects.get(id=crazy8content_id)
+            voted_crazy8 = Crazy8Vote.objects.filter(user=user).first()
+            if voted_crazy8: # 이미 투표한 것이 있다면, 해당 투표를 취소하고 새로운 투표를 추가
+                old_crazy8content = voted_crazy8.crazy8content
+                old_crazy8content.vote_count -= 1
+                old_crazy8content.save()
+                voted_crazy8.delete()
 
-        new_crazy8content.vote_count += 1
-        new_crazy8content.save()
-        return Crazy8Vote.objects.create(user=user, crazy8content=new_crazy8content)
+            new_crazy8content.vote_count += 1
+            new_crazy8content.save()
+            vote = Crazy8Vote.objects.create(user=user, crazy8content=new_crazy8content)
+            return vote
+        except (ValueError, TypeError, Crazy8Content.DoesNotExist, Crazy8Vote.DoesNotExist):
+            return None
 
     
 

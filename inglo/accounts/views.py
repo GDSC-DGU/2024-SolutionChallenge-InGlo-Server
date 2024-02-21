@@ -7,11 +7,11 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenError
 from django.http import JsonResponse
 from rest_framework import views, viewsets
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserSemiSerializer
 from .services.user_service import UserService
 
 logger = logging.getLogger('django')
@@ -36,7 +36,7 @@ class CustomGoogleLoginView(views.APIView):
 
         if "error" in user_info:
             return JsonResponse({"error": "Failed to fetch user information from Google"}, status=400)
-
+        
         user, created = User.objects.get_or_create(email=user_info['email'])
 
         # 새로운 사용자의 경우 임의의 비밀번호 설정
@@ -63,11 +63,15 @@ class CustomTokenRefreshView(TokenRefreshView):
     
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get('refresh')
-        logger.info("refresh_token: " + refresh_token)
-        user = User.objects.filter(refresh_token=refresh_token).first()
-        if user:
-            refresh_token = RefreshToken.for_user(user)  # 새로운 리프레시 토큰 생성
-            user.refresh_token = str(refresh_token)  # 새로운 리프레시 토큰 저장
+
+        # 리프레시 토큰의 유효성과 유효 기간 검증
+        try:
+            token = RefreshToken(refresh_token)
+            user = User.objects.get(id=token['user_id'], refresh_token=refresh_token)
+
+            # 새로운 리프레시 토큰과 액세스 토큰 발급
+            refresh_token = RefreshToken.for_user(user)
+            user.refresh_token = str(refresh_token)
             user.save()
 
             response_data = {
@@ -75,7 +79,10 @@ class CustomTokenRefreshView(TokenRefreshView):
                 'access_token': str(refresh_token.access_token),
             }
             return JsonResponse(response_data)
-        return JsonResponse({"error": "Invalid refresh token"}, status=401)
+        except TokenError:
+            return JsonResponse({"error": "Invalid or expired refresh token"}, status=401)
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=404)
     
 class ProfileImageUploadView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -85,7 +92,7 @@ class ProfileImageUploadView(views.APIView):
         유저가 업로드한 프로필 이미지를 S3에 저장하고, 이미지 URL을 유저 모델에 저장
         """
         user = request.user
-        image = request.FILES.get('image')  # 'profile_img'는 form-data에서 파일 필드의 이름
+        image = request.FILES.get('image')
         if not image:
             return JsonResponse({"error": "No image provided"}, status=400)
 
@@ -112,6 +119,9 @@ class UserDetailViewSet(viewsets.GenericViewSet, viewsets.mixins.RetrieveModelMi
         name = request.data.get('name')
         country = request.data.get('country')
         language = request.data.get('language')
+        if not name or not country or not language:
+            return JsonResponse({"error": "Name, country and language are required"}, status=400)
+        
         if UserService.update_user_info(user, name, country, language):
             return JsonResponse({"message": "User information updated successfully"}, status=200)
         else:
@@ -122,7 +132,14 @@ class AdditionalInfoProvidedView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        logger.info("access_token: " + request.headers.get('Authorization'))
         user = request.user
         return JsonResponse({"additional_info_provided": user.additional_info_provided})
 
+class SemiUserInfoView(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = UserSemiSerializer(user)
+        return JsonResponse(serializer.data)

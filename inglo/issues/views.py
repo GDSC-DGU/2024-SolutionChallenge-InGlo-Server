@@ -31,6 +31,8 @@ class SDGsIssueListView(generics.ListAPIView):
         """
 
         sdgs_number = self.kwargs.get('sdgs')
+        if not 1 <= int(sdgs_number) <= 17:
+            return Response({"error": "SDGs must be a number between 1 and 17."}, status=status.HTTP_400_BAD_REQUEST)
         return IssueService.get_issues_by_sdgs(sdgs_number)
 
 class IssueDetailView(views.APIView):
@@ -44,11 +46,8 @@ class IssueDetailView(views.APIView):
 
         issue_id = self.kwargs.get('issue_id')
         issue = IssueService.get_issue_with_increased_view(issue_id)
-        if issue:
-            serializer = IssueSerializer(issue,context={'request': request})
-            return Response(serializer.data)
-        else:
-            return Response({"error": "Issue not found"}, status=404)
+        serializer = IssueSerializer(issue,context={'request': request})
+        return Response(serializer.data)
 
 class IssueCreateView(views.APIView):
         
@@ -79,17 +78,29 @@ class IssueLikeView(views.APIView):
         else:
             return Response({"message": "Like removed successfully."}, status=204)
     
-class IssueCommentCreate(views.APIView):
+class IssueCommentViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin):
 
     permission_classes = [IsAuthenticated]
+    serializer_class = IssueCommentSerializer
 
-    def post(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):
+        """
+        issue_id를 받아 해당하는 Comment 리스트를 반환
+        """
+        issue_id = self.kwargs.get('issue_id')
+        comment_list = CommentService.get_comment_list_by_issue_id(issue_id)
+        serializer = IssueCommentSerializer(comment_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
         """
         댓글 생성
         """
 
         issue_id = self.kwargs.get('issue_id')
         comment = CommentService.create_comment(user=request.user, issue_id=issue_id, data=request.data)
+        if not comment:
+            return Response({"error": "Comment creation failed"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data, status=201)
 
@@ -104,6 +115,8 @@ class IssueCommentUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateMode
 
         comment_id = self.kwargs.get('comment_id')
         comment = CommentService.update_comment(user=request.user, comment_id=comment_id, data=request.data)
+        if not comment:
+            return Response({"error": "Comment update failed"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = IssueCommentSerializer(comment)
         return Response(serializer.data)
     
@@ -113,5 +126,7 @@ class IssueCommentUpdateDeleteViewSet(viewsets.GenericViewSet, mixins.UpdateMode
         """
         
         comment_id = self.kwargs.get('comment_id')
-        CommentService.delete_comment(user=request.user, comment_id=comment_id)
+        comment = CommentService.delete_comment(user=request.user, comment_id=comment_id)
+        if not comment:
+            return Response({"error": "Comment delete failed"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"message": "Comment deleted successfully."}, status=204)

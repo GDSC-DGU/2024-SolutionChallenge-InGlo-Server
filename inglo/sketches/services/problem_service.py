@@ -4,8 +4,6 @@ from datetime import datetime
 class ProblemService:
     @staticmethod
     def get_problems_by_sdgs(sdgs):
-        if not 1 <= int(sdgs) <= 17:
-            return Problem.objects.none()
         try:
             return Problem.objects.filter(sdgs=sdgs).order_by('-created_at')[:10]
         except Problem.DoesNotExist:

@@ -6,6 +6,7 @@ from accounts.views import (
     UserDetailViewSet,
     CustomTokenRefreshView,
     AdditionalInfoProvidedView,
+    SemiUserInfoView,
 )
 from rest_framework.routers import SimpleRouter
 
@@ -19,5 +20,6 @@ urlpatterns = [
     path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('info/', UserDetailViewSet.as_view({'get':'retrieve','patch':'update'}), name='user-info'),
     path('info/profile-img/', ProfileImageUploadView.as_view(), name='profile_image_upload'),
+    path('info/semi/', SemiUserInfoView.as_view(), name='semi-user-info'),
     path('additional-info/', AdditionalInfoProvidedView.as_view(), name='additional-info'),
 ]
