@@ -27,3 +27,9 @@ class ProblemService:
             return sketch
         except (Problem.DoesNotExist, ValueError, TypeError):
             return None
+        
+    def get_problem_by_id(problem_id):
+        try:
+            return Problem.objects.get(id=problem_id)
+        except Problem.DoesNotExist:
+            return None

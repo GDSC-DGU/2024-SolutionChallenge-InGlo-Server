@@ -8,16 +8,19 @@ class ProblemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class HMWSerializer(serializers.ModelSerializer):
-    problem_content = serializers.SerializerMethodField()
+
     class Meta:
         model = HMW
-        fields = ['id','problem','problem_content','content','created_at']
-    
-    def get_problem_content(self, obj):
-        if obj.problem:
-            return ProblemSerializer(obj.problem).data
-        return None
+        fields = ['id','content','created_at']
 
+class HMWListSerializer(serializers.ModelSerializer):
+    problem_content = serializers.CharField(source='content')
+    hmws = HMWSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Problem
+        fields = ['problem_content', 'hmws']
+    
 class Crazy8ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Crazy8Content
@@ -30,14 +33,22 @@ class Crazy8ContentForSketchDetailSerializer(serializers.ModelSerializer):
 
 class Crazy8StackSerializer(serializers.ModelSerializer):
     contents = Crazy8ContentSerializer(many=True, read_only=True)
-    hmw_content = serializers.SerializerMethodField()
     class Meta:
         model = Crazy8Stack
-        fields = ['id','problem', 'hmw_content','created_at']
+        fields = ['contents' ,'created_at']
     
-    def get_hmw_content(self, obj):
-        if obj.problem:
-            return HMW.objects.filter(problem=obj.problem).content
+class Crazy8StackForMyCrazy8Serializer(serializers.ModelSerializer):
+    hmw_content = serializers.CharField(source='hmw.content')
+    crazy8stack = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Sketch
+        fields = ['hmw_content', 'crazy8stack'] 
+
+    def get_crazy8stack(self, obj):
+        if obj.crazy8stack:
+            crazy8_contents = Crazy8Content.objects.filter(crazy8stack=obj.crazy8stack)
+            return Crazy8ContentForSketchDetailSerializer(crazy8_contents, many=True).data
 
 class SketchNestedSerializer(serializers.ModelSerializer):
     problem_content = serializers.SerializerMethodField()
