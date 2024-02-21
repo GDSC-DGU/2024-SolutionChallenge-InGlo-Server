@@ -17,28 +17,6 @@ from .services.user_service import UserService
 logger = logging.getLogger('django')
 logger.info("Starting the application...")
 load_dotenv()
-
-# ----------------------- api 테스트용
-# class GoogleLoginView(SocialLoginView):
-#     adapter_class = GoogleOAuth2Adapter
-#     callback_url = 'https://dongkyeom.com/api/v1/accounts/google/login/callback/'
-#     client_class = OAuth2Client
-
-#     def get_response(self):
-#         logger.info("GoogleLoginView.get_response() called")
-#         user = self.user
-
-#         refresh = RefreshToken.for_user(user)
-#         response_data = {
-#             'refresh': str(refresh),
-#             'access': str(refresh.access_token),
-#         }
-
-#         logger.info(f"JWT Tokens for user {user.email} (ID: {user.id}): {response_data}")
-
-#         return JsonResponse(response_data)
-    
-# ----------------------- api 테스트용
     
 User = get_user_model()
 
