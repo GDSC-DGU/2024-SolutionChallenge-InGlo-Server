@@ -125,23 +125,26 @@ class IssueService:
     @staticmethod
     @transaction.atomic
     def get_issue_with_increased_view(issue_id):
-        IssueList.objects.filter(issue_id=issue_id).update(views=F('views') + 1)
         try:
-            return Issue.objects.get(id=issue_id)
+            issue_list = IssueList.objects.get(issue_id=issue_id).update(views=F('views') + 1)
+            issue = Issue.objects.get(id=issue_id)
+            return issue
         except Issue.DoesNotExist:
             return None
         
     @staticmethod
     def get_recommended_issues():
         recent_time_limit = timezone.now() - timedelta(hours=72)
-        return IssueList.objects.annotate(
-            ranking=ExpressionWrapper(F('likes') * 10 + F('views'), output_field=fields.IntegerField())
-        ).filter(created_at__gte=recent_time_limit).order_by('-ranking')[:3]
+        try:
+            issue_list = IssueList.objects.annotate(
+                ranking=ExpressionWrapper(F('likes') * 10 + F('views'), output_field=fields.IntegerField())
+            ).filter(created_at__gte=recent_time_limit).order_by('-ranking')[:3]
+            return issue_list
+        except IssueList.DoesNotExist:
+            return IssueList.objects.none()
 
     @staticmethod
     def get_issues_by_sdgs(sdgs_number):
-        if not 1 <= int(sdgs_number) <= 17:
-            return IssueList.objects.none()
         try:
             return IssueList.objects.filter(sdgs=sdgs_number).order_by('-created_at')[:10]
         except (ValueError, TypeError):
@@ -150,13 +153,16 @@ class IssueService:
     @staticmethod
     @transaction.atomic
     def toggle_like(user, issue_id):
-        issue = Issue.objects.get(id=issue_id)
-        issue_list = IssueList.objects.filter(issue=issue)
-        issue_like, created = IssueLike.objects.get_or_create(user=user, issue_id=issue_id)
-        if not created:
-            issue_like.delete()
-            issue_list.update(likes=F('likes') - 1)
-            return False  # 좋아요 취소
-        else:
-            issue_list.update(likes=F('likes') + 1)
-            return True  # 좋아요 추가
+        try:
+            issue = Issue.objects.get(id=issue_id)
+            issue_list = IssueList.objects.filter(issue=issue)
+            issue_like, created = IssueLike.objects.get_or_create(user=user, issue_id=issue_id)
+            if not created:
+                issue_like.delete()
+                issue_list.update(likes=F('likes') - 1)
+                return False  # 좋아요 취소
+            else:
+                issue_list.update(likes=F('likes') + 1)
+                return True  # 좋아요 추가
+        except (Issue.DoesNotExist, IssueList.DoesNotExist):
+            return None

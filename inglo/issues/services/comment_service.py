@@ -7,10 +7,19 @@ class CommentService:
 
     @staticmethod
     def get_all_comments():
-        return IssueComment.objects.all()
+        try:
+            comments = IssueComment.objects.all()
+            return comments
+        except IssueComment.DoesNotExist:
+            return IssueComment.objects.none()
+
     
-    def get_issue_list(issue_id):
-        return IssueComment.objects.filter(issue_id=issue_id)
+    def get_comment_list_by_issue_id(issue_id):
+        try:
+            comments = IssueComment.objects.filter(issue_id=issue_id)
+            return comments
+        except IssueComment.DoesNotExist:
+            return IssueComment.objects.none()
         
     @staticmethod
     @transaction.atomic
