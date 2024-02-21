@@ -8,8 +8,10 @@ class CommentService:
     @staticmethod
     def get_all_comments():
         return IssueComment.objects.all()
+    
+    def get_issue_list(issue_id):
+        return IssueComment.objects.filter(issue_id=issue_id)
         
-
     @staticmethod
     @transaction.atomic
     def create_comment(user, issue_id, data):

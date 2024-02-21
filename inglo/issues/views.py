@@ -79,11 +79,24 @@ class IssueLikeView(views.APIView):
         else:
             return Response({"message": "Like removed successfully."}, status=204)
     
-class IssueCommentCreate(views.APIView):
+class IssueCommentViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin):
 
     permission_classes = [IsAuthenticated]
+    serializer_class = IssueCommentSerializer
 
-    def post(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs):
+        """
+        post_id를 받아 해당하는 Feedback 리스트를 반환
+        """
+        issue_id = self.kwargs.get('issue_id')
+        issue_list = CommentService.get_issue_list(issue_id)
+        if issue_list:
+            serializer = IssueCommentSerializer(issue_list, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request, *args, **kwargs):
         """
         댓글 생성
         """
