@@ -74,7 +74,7 @@ class PostDetailViewSet(viewsets.GenericViewSet, mixins.RetrieveModelMixin, mixi
             serializer = PostDetailSerializer(post, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Post not exist."}, status=status.HTTP_404_NOT_FOUND)
     
     def update(self, request, *args, **kwargs):
         """

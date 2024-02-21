@@ -1,7 +1,6 @@
 from ..models import Feedback
 from django.db import transaction
 from ..models import Post
-from django.http import Http404
 
 
 class FeedbackService:
@@ -47,7 +46,7 @@ class FeedbackService:
             feedback.save()
             return feedback
         except Feedback.DoesNotExist:
-            return Http404("Feedback does not exist")
+            return None
     
     @staticmethod
     @transaction.atomic
@@ -62,7 +61,7 @@ class FeedbackService:
             feedback.delete()
             return feedback
         except Feedback.DoesNotExist:
-            return Http404("Feedback does not exist")
+            return None
         
         
     

@@ -15,20 +15,32 @@ class ProblemViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Crea
     serializer_class = ProblemSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         """
         클라이언트로부터 받은 SDGs 값과 관련된 문제정의 리스트 반환
         """
         sdgs = self.kwargs.get('sdgs')
-        return ProblemService.get_problems_by_sdgs(sdgs)
+        if not 1 <= int(sdgs) <= 17:
+            return Response({"error": "SDGs must be a number between 1 and 17."}, status=status.HTTP_400_BAD_REQUEST)
+        problem_list = ProblemService.get_problems_by_sdgs(sdgs)
+        serializer = ProblemSerializer(problem_list, many=True)
+        return Response(serializer.data)
+        
 
     def create(self, request, *args, **kwargs):
         """
         클라이언트로부터 받은 SDGs, content를 바탕으로 문제 생성
         """
         sdgs = self.kwargs.get('sdgs')
+        if not 1 <= int(sdgs) <= 17:
+            return Response({"error": "SDGs must be a number between 1 and 17."}, status=status.HTTP_400_BAD_REQUEST)
+        
         content = request.data.get('content')
+        if not content:
+            return Response({"error": "Content is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
         problem = ProblemService.create_problem(sdgs, content)
+
         if problem:
             return Response({"message": "Problem insert successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "Problem creation failed"}, status=status.HTTP_400_BAD_REQUEST)
@@ -54,7 +66,7 @@ class SketchViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Creat
         유저가 작성한 솔루션 스케치 리스트 반환
         """
         user = request.user
-        sketches = SketchService.get_sketches_by_user(user)
+        sketches = SketchService.get_sketches_by_user(user)      
         serializer = SketchNestedSerializer(sketches, many=True)
         return Response(serializer.data)
 
@@ -70,10 +82,8 @@ class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
         
         problem_id = self.kwargs.get('problem_id')
         problem = ProblemService.get_problem_by_id(problem_id)
-        if problem:
-            serializer = HMWListSerializer(problem)
-            return Response(serializer.data)
-        return Response({"error": "Problem not found"}, status=404)
+        serializer = HMWListSerializer(problem)
+        return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
         """
@@ -83,7 +93,12 @@ class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
     
         problem_id = self.kwargs.get('problem_id')
         content = request.data.get('content')
+
+        if not content:
+            return Response({"error": "Content is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
         hmw = HMWService.create_hmw(problem_id,content)
+
         if hmw:
             return Response({"message": "HMW insert successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "HMW creation failed"}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,10 +125,8 @@ class Crazy8MyView(views.APIView):
         problem_id = self.kwargs.get('problem_id')
         user = request.user
         sketch = SketchService.get_sketches_by_problem_and_user(problem_id,user)
-        if sketch:
-            serializer = Crazy8StackForMyCrazy8Serializer(sketch)
-            return Response(serializer.data)
-        return Response({"error": "Crazy8 not found"}, status=404)
+        serializer = Crazy8StackForMyCrazy8Serializer(sketch)
+        return Response(serializer.data)
         
 class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     
@@ -127,15 +140,16 @@ class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Creat
         
         problem_id = self.kwargs.get('problem_id')
         sketches = SketchService.get_sketch_by_problem_id(problem_id)
+        if not sketches:
+            return Response({"error": "Sketch not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         crazy8stacks_data = []
 
         for sketch in sketches:
             if sketch.crazy8stack:
                 serializer = Crazy8StackSerializer(sketch.crazy8stack)
                 crazy8stacks_data.append(serializer.data)
-        if crazy8stacks_data:
-            return Response(crazy8stacks_data)
-        return Response({"error": "Crazy8 not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(crazy8stacks_data)
         
         
     def create(self, request, *args, **kwargs):
@@ -146,10 +160,14 @@ class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Creat
             
         problem_id = self.kwargs.get('problem_id')
         content = request.data.get('content')
+
+        if not content:
+            return Response({"error": "Content is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
         crazy8 = Crazy8Service.create_crazy8(problem_id,content,request.user)
         if crazy8:
             return Response({"message": "Crazy8 insert successfully."}, status=status.HTTP_201_CREATED)
-        return Response({"error": "Crazy8 creation failed"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Problem or Sketch(related with problem and now user) not exist."}, status=status.HTTP_404_NOT_FOUND)
         
 class Crazy8VoteView(views.APIView):
     
@@ -210,6 +228,10 @@ class SketchUpdateView(views.APIView):
         description = request.data.get('description')
         image = request.FILES.get('image')
         content = request.data.get('content')
+
+        if not title or not description or not content:
+            return Response({"error": "Title, description and content are required."}, status=status.HTTP_400_BAD_REQUEST)
+
         sketch = SketchService.update_sketch(request.user,problem_id,title,description,image,content)
         if sketch:
             return Response({"message": "Sketch update successfully."}, status=status.HTTP_201_CREATED)

@@ -1,7 +1,6 @@
 from ..models import Post, Sketch, PostLike
 from django.db import transaction
 from django.db.models import F
-from django.http import Http404, HttpResponseBadRequest as Http400
 
 class PostService:
 
@@ -49,7 +48,7 @@ class PostService:
             post.save()
             return post
         except Post.DoesNotExist:
-            return Http400("Post does not exist")
+            return None
     
     @staticmethod
     @transaction.atomic
@@ -61,7 +60,7 @@ class PostService:
             post.delete()
             return post
         except Post.DoesNotExist:
-            return Http400("Post does not exist")
+            return None
     
     @staticmethod
     @transaction.atomic
