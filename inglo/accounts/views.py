@@ -133,3 +133,11 @@ class AdditionalInfoProvidedView(views.APIView):
         user = request.user
         return JsonResponse({"additional_info_provided": user.additional_info_provided})
 
+class SemiUserInfoView(views.APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data)
