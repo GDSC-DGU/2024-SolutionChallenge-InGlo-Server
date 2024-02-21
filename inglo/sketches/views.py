@@ -1,6 +1,6 @@
 from rest_framework import status, viewsets, mixins
 from rest_framework.response import Response
-from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer, SketchNestedSerializer
+from .serializers import ProblemSerializer, HMWSerializer, Crazy8StackSerializer, SketchSerializer, SketchNestedSerializer, Crazy8StackForMyCrazy8Serializer, HMWListSerializer
 from .services.problem_service import ProblemService
 from .services.hmw_service import HMWService
 from .services.crazy8_service import Crazy8Service
@@ -61,14 +61,17 @@ class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
     serializer_class = HMWSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         """
-        클라이언트로부터 받은 problem_id 값과 관련된 HMW 리스트 반환
+        클라이언트로부터 받은 problem id 값과 관련된 "HMW"의 리스트 반환
         """
-
+        
         problem_id = self.kwargs.get('problem_id')
-        hmw = HMWService.get_hmws_by_problem(problem_id)
-        return hmw
+        problem = ProblemService.get_problem_by_id(problem_id)
+        if problem:
+            serializer = HMWListSerializer(problem)
+            return Response(serializer.data)
+        return Response({"error": "Problem not found"}, status=404)
     
     def create(self, request, *args, **kwargs):
         """
@@ -95,20 +98,42 @@ class HMWViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateMo
         if hmw:
             return Response({"message": "HMW update successfully."}, status=status.HTTP_201_CREATED)
         return Response({"error": "HMW update failed"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class Crazy8MyView(views.APIView):
+    
+    def get(self, request, *args, **kwargs):
+        """
+        유저가 최근에 선택한 빈 스케치에 연결된 Crazy8Stack 반환
+        """
+        problem_id = self.kwargs.get('problem_id')
+        user = request.user
+        sketch = SketchService.get_sketches_by_problem_and_user(problem_id,user)
+        if sketch:
+            serializer = Crazy8StackForMyCrazy8Serializer(sketch)
+            return Response(serializer.data)
+        return Response({"error": "Crazy8 not found"}, status=404)
         
 class Crazy8ViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateModelMixin):
     
     serializer_class = Crazy8StackSerializer
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
+    def list(self, request, *args, **kwargs):
         """
-        클라이언트로부터 받은 problem id 값과 관련된 "Crazy8 스택"의 리스트 반환
+        클라이언트로부터 받은 problem id 값과 관련된 Crazy8Stack 반환
         """
         
         problem_id = self.kwargs.get('problem_id')
-        crazy8 = Crazy8Service.get_crazy8s_by_problem(problem_id)
-        return crazy8
+        sketches = SketchService.get_sketch_by_problem_id(problem_id)
+        crazy8stacks_data = []
+
+        for sketch in sketches:
+            if sketch.crazy8stack:
+                serializer = Crazy8StackSerializer(sketch.crazy8stack)
+                crazy8stacks_data.append(serializer.data)
+        if crazy8stacks_data:
+            return Response(crazy8stacks_data)
+        return Response({"error": "Crazy8 not found"}, status=status.HTTP_404_NOT_FOUND)
         
         
     def create(self, request, *args, **kwargs):

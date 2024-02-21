@@ -21,6 +21,17 @@ class PostViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.CreateM
         username = self.request.query_params.get('username', '')
         return PostService.get_post_list(content=content, username=username)
     
+    def list(self, request, *args, **kwargs):
+        """
+        content와 username을 query parameter로 받아
+        필터링된 Post 리스트를 반환(기본값은 공백)
+        """
+        content = self.request.query_params.get('content', '')
+        username = self.request.query_params.get('username', '')
+        posts = PostService.get_post_list(content=content, username=username)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def create(self, request, *args, **kwargs):
         """
         content를 받아 Post를 생성
@@ -96,11 +107,25 @@ class PostLikeView(views.APIView):
         else:
             return Response({"message": "Like removed successfully."}, status=status.HTTP_204_NO_CONTENT)
         
-class FeedbackCreateView(views.APIView):
+class FeedbackViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.ListModelMixin):
 
+    serializer_class = FeedbackSerializer
     permission_classes = [IsAuthenticated]
-    
-    def post(self, request, *args, **kwargs):
+
+    def list(self, request, *args, **kwargs):
+        """
+        post_id를 받아 해당하는 Feedback 리스트를 반환
+        """
+        post_id = self.kwargs.get('post_id')
+        feedback_list = FeedbackService.get_feedback_list(post_id)
+        if feedback_list:
+            serializer = FeedbackSerializer(feedback_list, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+    def create(self, request, *args, **kwargs):
         """
         content를 받아 Feedback을 생성
         """

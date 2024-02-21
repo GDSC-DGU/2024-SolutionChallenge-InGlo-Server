@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Issue, IssueList, IssueComment, IssueLike
+from accounts.serializers import UserSemiSerializer
 
 class IssueListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,15 +8,11 @@ class IssueListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class IssueCommentSerializer(serializers.ModelSerializer):
-    user_name = serializers.SerializerMethodField()
+    user = UserSemiSerializer(read_only=True)
 
     class Meta:
         model = IssueComment
-        fields = ['id', 'user' , 'user_name', 'content', 'parent_comment', 'created_at']
-
-    def get_user_name(self, obj):
-        user = self.context['request'].user
-        return user.name
+        fields = ['id', 'user' ,'content', 'parent_comment', 'created_at']
 
 class IssueLikeSerializer(serializers.ModelSerializer):
     class Meta:

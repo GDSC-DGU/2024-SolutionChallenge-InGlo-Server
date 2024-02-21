@@ -6,6 +6,10 @@ from ..models import Post
 class FeedbackService:
 
     @staticmethod
+    def get_feedback_list(post_id):
+        return Feedback.objects.filter(post_id=post_id)
+
+    @staticmethod
     @transaction.atomic
     def create_feedback(user, post_id, content, parent_id):
         """

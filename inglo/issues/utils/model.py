@@ -1,5 +1,5 @@
 import torch
-from transformers import BertTokenizer, BertModel
+from transformers import BertModel
 
 class BERTClass(torch.nn.Module):
     def __init__(self):

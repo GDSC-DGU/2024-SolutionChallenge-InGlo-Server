@@ -5,6 +5,16 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 class Crazy8Service:
+
+    @staticmethod
+    def get_crazy8stack_by_user(user):
+        try:
+            crazy8stack = Crazy8Stack.objects.filter(id=Sketch.objects.filter(user=user).first().crazy8stack.id)
+            return crazy8stack
+        except (Crazy8Stack.DoesNotExist, ValueError, TypeError):
+            return Crazy8Stack.objects.none()
+        
+    @staticmethod
     def get_crazy8s_by_problem(problem_id):
         try:
             problem = Problem.objects.get(id = problem_id)
@@ -23,7 +33,7 @@ class Crazy8Service:
             sketch.crazy8stack = crazy8stack
             sketch.save()
         if Crazy8Content.objects.filter(crazy8stack=sketch.crazy8stack).count() >= 8:
-            raise ValidationError("Maximum number of Crazy8Contents reached. No more can be created.")
+            raise ValidationError("Maximum number of Crazy8Contents reached. No more can be created.", code=400)
         crazy8content = Crazy8Content.objects.create(crazy8stack=sketch.crazy8stack, content=content)
         return crazy8content
     
