@@ -92,7 +92,7 @@ class ProfileImageUploadView(views.APIView):
         유저가 업로드한 프로필 이미지를 S3에 저장하고, 이미지 URL을 유저 모델에 저장
         """
         user = request.user
-        image = request.FILES.get('image')  # 'profile_img'는 form-data에서 파일 필드의 이름
+        image = request.FILES.get('image')
         if not image:
             return JsonResponse({"error": "No image provided"}, status=400)
 
@@ -119,6 +119,9 @@ class UserDetailViewSet(viewsets.GenericViewSet, viewsets.mixins.RetrieveModelMi
         name = request.data.get('name')
         country = request.data.get('country')
         language = request.data.get('language')
+        if not name or not country or not language:
+            return JsonResponse({"error": "Name, country and language are required"}, status=400)
+        
         if UserService.update_user_info(user, name, country, language):
             return JsonResponse({"message": "User information updated successfully"}, status=200)
         else:
@@ -129,7 +132,6 @@ class AdditionalInfoProvidedView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        logger.info("access_token: " + request.headers.get('Authorization'))
         user = request.user
         return JsonResponse({"additional_info_provided": user.additional_info_provided})
 
