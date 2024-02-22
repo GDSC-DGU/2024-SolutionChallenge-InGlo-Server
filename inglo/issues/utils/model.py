@@ -1,15 +1,17 @@
-import torch
-from transformers import BertModel
+import torch.nn as nn
+from transformers import AlbertModel
 
-class BERTClass(torch.nn.Module):
+class ALBERTClass(nn.Module):
     def __init__(self):
-        super(BERTClass, self).__init__()
-        self.bert_model = BertModel.from_pretrained('bert-base-uncased', return_dict=True)
-        self.dropout = torch.nn.Dropout(0.3)
-        self.linear = torch.nn.Linear(768, 17)  # 17 is the number of target classes
+        super(ALBERTClass, self).__init__()
+        self.albert = AlbertModel.from_pretrained("albert-base-v2")
+        self.dropout = nn.Dropout(0.3)
+        self.linear = nn.Linear(768, 17)
 
     def forward(self, input_ids, attention_mask, token_type_ids):
-        output = self.bert_model(input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        output_dropout = self.dropout(output.pooler_output)
+        
+        output = self.albert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        pooled_output = output.pooler_output
+        output_dropout = self.dropout(pooled_output)
         output = self.linear(output_dropout)
         return output
