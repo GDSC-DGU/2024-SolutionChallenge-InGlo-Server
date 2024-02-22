@@ -19,4 +19,4 @@ def fetch_news(keyword):
         results = response.json().get('results', [])
         return results
     else:
-        print('Failed to fetch news')
+        return []

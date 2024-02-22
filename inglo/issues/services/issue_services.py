@@ -18,9 +18,11 @@ import aioboto3
 import aiohttp
 import asyncio
 from asgiref.sync import sync_to_async
+from logging import getLogger
 
-logger = logging.getLogger('django')
+logger = getLogger('django')
 load_dotenv()
+
 
 class IssueService:
 
@@ -30,7 +32,6 @@ class IssueService:
             result = urlparse(url)
             return all([result.scheme, result.netloc])
         except Exception:
-            logger.error(logging.ERROR, f"Error checking if {url} is a valid URL")
             return False
     @staticmethod
     async def provide_none():
@@ -55,7 +56,6 @@ class IssueService:
 
                 return f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{file_path}"
         except Exception as e:
-            logger.error(logging.ERROR,f"Error downloading or uploading image: {e}")
             return None
 
     @staticmethod
@@ -92,7 +92,7 @@ class IssueService:
             
             sdgs = classify_news(item.get('content', ''))
 
-            if not sdgs.isdigit() or not 1 <= int(sdgs) <= 17: #분류모델 돌린 결과 나온 sdgs가 1~17 사이의 숫자가 아니면 for문의 다음 item으로 넘어감
+            if not 1 <= int(sdgs) <= 17: #분류모델 돌린 결과 나온 sdgs가 1~17 사이의 숫자가 아니면 for문의 다음 item으로 넘어감
                 continue
 
             pub_date = item.get('pubDate', '')
@@ -121,12 +121,14 @@ class IssueService:
     def update_issues_from_news(keyword):
         news_items = fetch_news(keyword)
         asyncio.run(IssueService.update_issues_from_news_async(news_items))
+        logger.info("Successfully updated issues")
+
 
     @staticmethod
     @transaction.atomic
     def get_issue_with_increased_view(issue_id):
         try:
-            issue_list = IssueList.objects.get(issue_id=issue_id).update(views=F('views') + 1)
+            issue_list = IssueList.objects.filter(issue_id=issue_id).update(views=F('views') + 1)
             issue = Issue.objects.get(id=issue_id)
             return issue
         except Issue.DoesNotExist:
