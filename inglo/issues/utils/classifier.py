@@ -1,6 +1,6 @@
 import torch
 from transformers import AlbertTokenizer, pipeline
-from .predict import get_overlapped_chunks, load_model, predict
+from .predict import get_overlapped_chunks, summarize_text, load_model, predict
 
 def classify_news(content):
     """
@@ -14,21 +14,8 @@ def classify_news(content):
     model = load_model(model_path, device)
 
     text = content
+    
+    final_summary = summarize_text(text, summarizer, tokenizer)
 
-    # Summarize each chunk
-    outs = []
-    for chunk in get_overlapped_chunks(text, 1024, 32):
-        out = summarizer(chunk, max_length=128, min_length=32)
-        outs.append(out[0]['summary_text'])
-
-    # Combine the chunk summaries into a single text
-    text = ' '.join(outs)
-
-    if len(tokenizer.tokenize(text)) > 512:
-        summary = summarizer(text, max_length=512)[0]['summary_text']
-    else:
-        summary = text
-
-    predictions = predict(model, tokenizer, summary, max_len=256, device=device)
-
+    predictions = predict(model, tokenizer, final_summary, max_len=512, device=device)
     return (predictions.item()+1)
