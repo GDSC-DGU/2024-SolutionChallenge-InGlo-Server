@@ -9,7 +9,7 @@ def classify_news(content):
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     summarizer = pipeline('summarization', model='facebook/bart-large-cnn', device=0)
-    model_path = "./output_multi_class/best_model_state.pt"
+    model_path = "issues/utils/output_multi_class/best_model_state.pt"
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     model = load_model(model_path, device)
 
