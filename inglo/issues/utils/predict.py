@@ -1,11 +1,11 @@
 import torch
-from issues.utils.model import BERTClass
+from issues.utils.model import ALBERTClass
 
 def get_overlapped_chunks(text, chunk, overlap):
     return [text[i:i+chunk] for i in range(0, len(text), chunk-overlap)]
 
 def load_model(model_path, device):
-    model = BERTClass().to(device)
+    model = ALBERTClass().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
     return model

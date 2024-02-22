@@ -1,5 +1,5 @@
 import torch
-from transformers import BertTokenizer, pipeline
+from transformers import AlbertTokenizer, pipeline
 from .predict import get_overlapped_chunks, load_model, predict
 
 def classify_news(content):
@@ -9,8 +9,8 @@ def classify_news(content):
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     summarizer = pipeline('summarization', model='facebook/bart-large-cnn', device=0)
-    model_path = "issues/utils/output_multi_class/best_model_state.pt"
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model_path = "issues/utils/best_model_state.pt"
+    tokenizer = AlbertTokenizer.from_pretrained('albert-base-v2')
     model = load_model(model_path, device)
 
     text = content
