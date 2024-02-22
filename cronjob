@@ -1,0 +1,1 @@
+0 * * * * cd /usr/src/app/inglo && python call_issue_create_api.py >> /var/log/cron.log 2>&1
