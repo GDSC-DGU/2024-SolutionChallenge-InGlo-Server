@@ -1,18 +1,21 @@
 from ..models import Sketch
 from ..models import Problem
 from dotenv import load_dotenv
-import requests
-from io import BytesIO
 import os
 import boto3
 import magic
-from urllib.parse import urlparse
+from django.db.models import Q
+
+load_dotenv()
 
 class SketchService:
 
     def get_sketches_by_user(user):
         try:
-            sketch_list = Sketch.objects.filter(user=user).order_by('-created_at')
+            # 제목과 내용이 '모두' Untitled인 스케치를 제외
+            sketch_list = Sketch.objects.filter(user=user).exclude(
+                Q(title="Untitled") & Q(description="Untitled")
+            ).order_by('-created_at')
             return sketch_list
         except Sketch.DoesNotExist:
             return Sketch.objects.none()
