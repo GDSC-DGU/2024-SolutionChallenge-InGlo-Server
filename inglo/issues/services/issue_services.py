@@ -70,6 +70,8 @@ class IssueService:
             for item in news_items:
                 if await sync_to_async(Issue.objects.filter(content=item.get('content')).exists)():
                     continue
+                if await sync_to_async(IssueList.objects.filter(title=item.get('title')).exists)():
+                    continue
                 insert_list.append(item)
                 image_url = item.get('image_url', '')
                 file_path = f"news_images/{item.get('article_id','')}"
@@ -81,7 +83,7 @@ class IssueService:
                     tasks.append(IssueService.provide_none())
 
 
-            images = await asyncio.gather(*tasks,return_exceptions=True)  # 각 작업의 결과를 기다립니다.
+            images = await asyncio.gather(*tasks,return_exceptions=True)  # 각 작업의 결과를 기다림
             await sync_to_async(IssueService.save_issues_and_images, thread_sensitive=True)(insert_list, images)
 
     @staticmethod
