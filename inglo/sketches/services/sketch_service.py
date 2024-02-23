@@ -14,7 +14,7 @@ class SketchService:
         try:
             # 제목과 내용이 '모두' Untitled인 스케치를 제외
             sketch_list = Sketch.objects.filter(user=user).exclude(
-                Q(title="Untitled") & Q(description="Untitled")
+                Q(title="Untitled") & Q(description="No description")
             ).order_by('-created_at')
             return sketch_list
         except Sketch.DoesNotExist:
