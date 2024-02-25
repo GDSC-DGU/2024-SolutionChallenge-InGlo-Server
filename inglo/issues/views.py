@@ -4,7 +4,7 @@ from .serializers import IssueSerializer, IssueListSerializer, IssueCommentSeria
 from .services.issue_services import IssueService
 from .services.comment_service import CommentService
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from issues.decorators.allow_server_ip_only import allow_server_ip_only
+from issues.decorators.allow_server_ip_only import allow_secret_header_only
 from django.utils.decorators import method_decorator
 
 class RecommendedIssueListView(generics.ListAPIView):
@@ -51,7 +51,7 @@ class IssueDetailView(views.APIView):
         serializer = IssueSerializer(issue,context={'request': request})
         return Response(serializer.data)
 
-@method_decorator(allow_server_ip_only, name='dispatch')
+@method_decorator(allow_secret_header_only, name='dispatch')
 class IssueCreateView(views.APIView):
 
     permission_classes = [AllowAny]
